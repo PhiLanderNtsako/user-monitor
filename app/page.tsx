@@ -1,14 +1,47 @@
-import Image from "next/image";
+"use client";
 
-// app/page.tsx
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userString = localStorage.getItem("user");
+
+    // If no token or user data, redirect to login
+    if (!token || !userString) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const user = JSON.parse(userString);
+      const role = user.user_role;
+      const name = user.name;
+
+      if (role === "admin" || role === "operator") {
+        router.push("/dashboard");
+      } else {
+        const username = name.toLowerCase().replace(/\s+/g, "-");
+        router.push(`/user/${username}`);
+      }
+    } catch (e) {
+      console.error("Failed to parse user info:", e);
+      // If parsing fails, redirect to login
+      router.push("/login");
+    }
+  }, [router]);
+
+  // Show loading state while checking auth
   return (
     <div className="text-center">
       <h1 className="text-3xl font-semibold mb-4">
         Welcome to the Work Status App
       </h1>
       <p className="text-gray-600">
-        Select a role from the navigation bar to continue.
+        Checking authentication...
       </p>
     </div>
   );

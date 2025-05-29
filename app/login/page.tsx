@@ -49,10 +49,11 @@ export default function LoginPage() {
         // Store token and user info (localStorage for now)
         localStorage.setItem("token", result.token);
         localStorage.setItem("user", JSON.stringify(result.user));
+        window.dispatchEvent(new Event("authChange"));
 
         // Redirect based on role
-        if (result.user.user_role === "admin") {
-          router.push("/admin");
+        if (result.user.user_role === "admin" || result.user.user_role === "operator") {
+          router.push("/dashboard");
         } else {
           router.push("/user");
         }

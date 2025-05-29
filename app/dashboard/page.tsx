@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 type User = {
   id: number;
   user_first_name: string;
+  user_last_name: string;
+  extension_number: string;
   user_email: string;
   status_name: string;
   status_note: string;
@@ -208,7 +210,7 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-6xl mx-auto mt-8 p-6 bg-white rounded-md shadow-md">
-      <h1 className="text-3xl font-bold mb-6">Admin: User Status Management</h1>
+      <h1 className="text-3xl font-bold mb-6">Status Monitor</h1>
 
       {/* Search */}
       <div className="mb-4">
@@ -231,7 +233,7 @@ export default function AdminPage() {
           <table className="min-w-full table-auto border-collapse border border-gray-300">
             <thead>
               <tr>
-                {["name", "email", "current_status", "last_update"].map(
+                {["name", "extension_number", "current_status", "last_update", "comment"].map(
                   (key) => (
                     <th
                       key={key}
@@ -247,7 +249,7 @@ export default function AdminPage() {
                     </th>
                   )
                 )}
-                <th className="border border-gray-300 px-4 py-2">Action</th>
+                {/* <th className="border border-gray-300 px-4 py-2">Action</th> */}
               </tr>
             </thead>
             <tbody>
@@ -261,28 +263,47 @@ export default function AdminPage() {
                 filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-100">
                     <td className="border border-gray-300 px-4 py-2">
-                      {user.user_first_name}
+                      {user.user_first_name} {user.user_last_name}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
-                      {user.user_email}
+                      {user.extension_number}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 px-4 py-2 flex items-center gap-2">
+                      <span
+                        className={`w-3 h-3 rounded-full inline-block ${
+                          user.status_name === "Available"
+                          ? "bg-green-500"
+                          : user.status_name === "On Lunch"
+                            ? "bg-yellow-500"
+                            : user.status_name === "In a Meeting"
+                            ? "bg-orange-500"
+                            : user.status_name === "On Leave"
+                            ? "bg-red-500"
+                            : user.status_name === "On Sick Leave"
+                            ? "bg-red-600"
+                            : user.status_name === "Logged Out"
+                            ? "bg-gray-500"
+                            : user.status_name === "Away"
+                            ? "bg-gray-700"
+                            : "bg-gray-300"
+                        }`}
+                      ></span>
                       {user.status_name}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {user.status_note}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
                       {new Date(user.updated_at).toLocaleString()}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
+                      {user.status_note}
+                    </td>
+                    {/* <td className="border border-gray-300 px-4 py-2">
                       <button
                         className="text-blue-600 hover:underline"
                         onClick={() => openModal(user)}
                       >
                         Update
                       </button>
-                    </td>
+                    </td> */}
                   </tr>
                 ))
               )}
