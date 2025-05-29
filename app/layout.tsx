@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="min-h-screen bg-gray-50 text-gray-900">
         <nav className="bg-white shadow-md p-4 flex justify-between">
-          <div className="font-bold text-lg">Work Status</div>
+          <div className="font-bold text-lg">Switchboard Monitor</div>
           <div className="space-x-4">
             <Link href="/user" className="hover:underline">
               User

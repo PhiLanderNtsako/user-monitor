@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams  } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,6 +17,9 @@ export default function LoginPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
+
+    const params = useSearchParams();
+  const error = params.get("error");
 
   const {
     register,
@@ -66,6 +69,9 @@ export default function LoginPage() {
   return (
     <div className="max-w-md mx-auto mt-12 p-8 bg-white shadow-md rounded-lg">
       <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+      {error === "unauthorized" && (
+        <p className="text-red-600 mb-4">You must be logged in to access the admin page.</p>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 type StatusLog = {
   id: number;
@@ -183,6 +184,23 @@ export default function UserPage() {
       console.error("Failed to refresh current status.");
     }
   };
+
+    const router = useRouter();
+  const [authorized, setAuthorized] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token"); // or sessionStorage, cookie, etc.
+
+    if (!token) {
+      router.replace("/login?error=unauthorized");
+    } else {
+      setAuthorized(true);
+    }
+  }, [router]);
+
+  if (authorized === null) {
+    return <p>Checking login...</p>; // You can show a spinner here
+  }
 
   return (
     <div className="max-w-3xl mx-auto mt-8 p-6 bg-white rounded-md shadow-md">
