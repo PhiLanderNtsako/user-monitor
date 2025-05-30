@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname  } from "next/navigation";
 
 type UserData = {
   id: number;
@@ -12,6 +12,7 @@ type UserData = {
 
 export default function Navigation() {
   const router = useRouter();
+  const pathname = usePathname(); // Get current path
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -64,38 +65,56 @@ export default function Navigation() {
     router.push("/login");
   };
 
-  return (
-    <nav className="bg-white shadow-md p-4 flex justify-between items-center">
-      <div className="font-bold text-lg">
-        <p> Switchboard Monitor</p>
+    const isActive = (href: string) => pathname === href;
+
+ return (
+    <nav className="bg-white shadow-sm border-b">
+      <div className="max-w-screen-lg mx-auto px-4 py-3 flex justify-between items-center">
+        <div>
+          <h1 className="text-xl font-bold text-gray-800">
+            Switchboard Monitor
+          </h1>
+          {isLoggedIn && userData && (
+            <p className="text-sm text-gray-500">
+              Logged in as <span className="font-medium font">{userData.name}</span> (
+              {userData.user_role})
+            </p>
+          )}
+        </div>
+
         {isLoggedIn && userData && (
-          <small> {userData.name} {userData.user_role} </small>
+          <div className="flex items-center space-x-4 text-sm">
+            {isAdmin ? (
+              <>
+                <Link href="/dashboard"  className={`hover:text-blue-600 ${
+                    isActive("/dashboard") ? "text-blue-600 font-semibold" : "text-gray-700"
+                  }`}>
+                  Dashboard
+                </Link>
+                <Link href="/admin/users"  className={`hover:text-blue-600 ${
+                    isActive("/admin/users") ? "text-blue-600 font-semibold" : "text-gray-700"
+                  }`}>
+                  Users
+                </Link>
+              </>
+            ) : (
+              <Link
+                href={`/user/${userData.name}`}
+                className={`hover:text-blue-600 ${
+                    pathname.startsWith("/user/") ? "text-blue-600 font-semibold" : "text-gray-700"
+                  }`}>
+                My Page
+              </Link>
+            )}
+            <button
+              onClick={handleLogout}
+              className="text-red-600 hover:text-red-800 font-medium"
+            >
+              Logout
+            </button>
+          </div>
         )}
       </div>
-      {isLoggedIn && userData && (
-        <div className="space-x-4 flex items-center">
-          {isAdmin ? (
-            <>
-            <Link href="/admin/users" className="hover:underline">
-              Users
-            </Link>
-            <Link href="/dashboard/" className="hover:underline">
-              Dashboard
-              </Link>
-              </>
-          ) : (
-            <Link href={`/user/${userData.name}`} className="hover:underline">
-              {userData.name} - {userData.user_role}
-            </Link>
-          )}
-          <button
-            onClick={handleLogout}
-            className="hover:underline text-red-600"
-          >
-            Logout
-          </button>
-        </div>
-      )}
     </nav>
   );
 }
