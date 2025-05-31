@@ -25,7 +25,7 @@ export default function HomePage() {
         router.push("/dashboard");
       } else {
         const username = name.toLowerCase().replace(/\s+/g, "-");
-        router.push(`/user/${username}`);
+        router.push(`/user`);
       }
     } catch (e) {
       console.error("Failed to parse user info:", e);
@@ -40,9 +40,7 @@ export default function HomePage() {
       <h1 className="text-3xl font-semibold mb-4">
         Welcome to the Work Status App
       </h1>
-      <p className="text-gray-600">
-        Checking authentication...
-      </p>
+      <p className="text-gray-600">Checking authentication...</p>
     </div>
   );
 }

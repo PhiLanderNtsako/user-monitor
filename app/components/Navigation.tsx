@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter, usePathname  } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 type UserData = {
   id: number;
@@ -65,9 +65,9 @@ export default function Navigation() {
     router.push("/login");
   };
 
-    const isActive = (href: string) => pathname === href;
+  const isActive = (href: string) => pathname === href;
 
- return (
+  return (
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-screen-lg mx-auto px-4 py-3 flex justify-between items-center">
         <div>
@@ -76,7 +76,8 @@ export default function Navigation() {
           </h1>
           {isLoggedIn && userData && (
             <p className="text-sm text-gray-500">
-              Logged in as <span className="font-medium font">{userData.name}</span> (
+              Logged in as{" "}
+              <span className="font-medium font">{userData.name}</span> (
               {userData.user_role})
             </p>
           )}
@@ -86,14 +87,24 @@ export default function Navigation() {
           <div className="flex items-center space-x-4 text-sm">
             {isAdmin ? (
               <>
-                <Link href="/dashboard"  className={`hover:text-blue-600 ${
-                    isActive("/dashboard") ? "text-blue-600 font-semibold" : "text-gray-700"
-                  }`}>
+                <Link
+                  href="/dashboard"
+                  className={`hover:text-blue-600 ${
+                    isActive("/dashboard")
+                      ? "text-blue-600 font-semibold"
+                      : "text-gray-700"
+                  }`}
+                >
                   Dashboard
                 </Link>
-                <Link href="/admin/users"  className={`hover:text-blue-600 ${
-                    isActive("/admin/users") ? "text-blue-600 font-semibold" : "text-gray-700"
-                  }`}>
+                <Link
+                  href="/admin/users"
+                  className={`hover:text-blue-600 ${
+                    isActive("/admin/users")
+                      ? "text-blue-600 font-semibold"
+                      : "text-gray-700"
+                  }`}
+                >
                   Users
                 </Link>
               </>
@@ -101,9 +112,12 @@ export default function Navigation() {
               <Link
                 href={`/user/${userData.name}`}
                 className={`hover:text-blue-600 ${
-                    pathname.startsWith("/user/") ? "text-blue-600 font-semibold" : "text-gray-700"
-                  }`}>
-                My Page
+                  isActive("/user")
+                    ? "text-blue-600 font-semibold"
+                    : "text-gray-700"
+                }`}
+              >
+                Profile
               </Link>
             )}
             <button
