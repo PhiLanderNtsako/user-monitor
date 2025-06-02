@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import EditUserModal from "@/app/components/EditUserModal";
@@ -20,36 +19,14 @@ type User = {
 	telephone?: string;
 };
 
-type FormData = {
-	user_id: number;
-	first_name: string;
-	last_name: string;
-	email: string;
-	extension_number: string;
-	cellphone: string;
-	telephone: string;
-	password: string;
-	department_id: number;
-	verification_code: string;
-	role_id: number;
-	user_role: string;
-};
-
 export default function UserPage() {
 	const router = useRouter();
-	const { user_id } = useParams();
-	const [submitMessage, setSubmitMessage] = useState({ text: "", type: "" });
+	const { user_id } = useParams<{ user_id: string }>();
+	const parsedUserId = user_id ? parseInt(user_id, 10) : undefined;
 	const [user, setUser] = useState<User | null>(null);
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(true);
 	const [isModalOpen, setIsModalOpen] = useState(false);
-
-	const {
-		register,
-		handleSubmit,
-		reset,
-		formState: { errors, isSubmitting },
-	} = useForm<FormData>();
 
 	useEffect(() => {
 		const fetchUser = async () => {
@@ -61,7 +38,6 @@ export default function UserPage() {
 
 				if (data.status === "success") {
 					setUser(data.data[0]);
-					reset(data.data[0]); // Reset form with user data
 				} else {
 					setError(data.message || "Failed to fetch user");
 				}
@@ -73,52 +49,7 @@ export default function UserPage() {
 		};
 
 		fetchUser();
-	}, [user_id, reset]);
-
-	// Handle form submission
-	const onSubmit = async (formData: FormData) => {
-		setSubmitMessage({ text: "", type: "" });
-		try {
-			const response = await fetch(
-				`https://test.apbco.co.za/switchboard/api/public/index.php/users/`,
-				{
-					method: "PUT",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						...formData,
-						user_id: Number(user_id), // Ensure user_id is included in the body
-					}),
-				}
-			);
-
-			const result = await response.json();
-
-			if (result.status === "success") {
-				setSubmitMessage({
-					text: "✅ User successfully saved! Redirecting...",
-					type: "success",
-				});
-				reset();
-				setTimeout(() => {
-					setIsModalOpen(false);
-					router.push(`/admin/users/${result.id}`);
-				}, 1000);
-			} else {
-				setSubmitMessage({
-					text: result.message || "❌ Failed to save user.",
-					type: "error",
-				});
-			}
-		} catch (err) {
-			console.error("Error:", err);
-			setSubmitMessage({
-				text: "❌ Failed to save user due to network error.",
-				type: "error",
-			});
-		}
-	};
+	}, [user_id]);
 
 	// Auth check
 	useEffect(() => {
@@ -166,16 +97,11 @@ export default function UserPage() {
 		);
 	}
 
-	const getMessageClass = (type: string) => {
-		switch (type) {
-			case "success":
-				return "bg-green-100 border-green-400 text-green-700";
-			case "error":
-				return "bg-red-100 border-red-400 text-red-700";
-			default:
-				return "bg-blue-100 border-blue-400 text-blue-700";
-		}
-	};
+	// If `user_id` is required:
+	if (parsedUserId === undefined || isNaN(parsedUserId)) {
+		// handle error, redirect, or show fallback
+		return <div>User ID is invalid</div>;
+	}
 
 	return (
 		<div className="max-w-4xl mx-auto p-6">
@@ -295,16 +221,9 @@ export default function UserPage() {
 			{/* Edit User Modal */}
 			{isModalOpen && (
 				<EditUserModal
-					register={register}
-					reset={reset}
-					handleSubmit={handleSubmit}
-					onClose={() => setIsModalOpen(false)}
-					setSubmitMessage={setSubmitMessage}
-					getMessageClass={getMessageClass}
-					submitMessage={submitMessage}
-					onSubmit={onSubmit}
-					errors={errors}
-					isSubmitting={isSubmitting}
+					userData={user}
+					modalClose={() => setIsModalOpen(false)}
+					user_id={parsedUserId}
 				/>
 			)}
 		</div>

@@ -126,6 +126,7 @@ export default function UsersPage() {
 				return new Date(user.created_at).getTime(); // returns number (timestamp)
 			}
 			const val = user[key];
+			if (val === undefined) return "";
 			return typeof val === "string" ? val.toLowerCase() : val;
 		};
 

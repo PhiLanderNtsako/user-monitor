@@ -19,14 +19,12 @@ export default function HomePage() {
     try {
       const user = JSON.parse(userString);
       const role = user.user_role;
-      const name = user.name;
 
-      if (role === "admin" || role === "operator") {
-        router.push("/dashboard");
-      } else {
-        const username = name.toLowerCase().replace(/\s+/g, "-");
-        router.push(`/user`);
-      }
+		if (role === "admin" || role === "operator") {
+			router.push("/dashboard");
+		} else {
+			router.push(`/user`);
+		}
     } catch (e) {
       console.error("Failed to parse user info:", e);
       // If parsing fails, redirect to login

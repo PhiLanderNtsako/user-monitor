@@ -61,7 +61,7 @@ export default function LoginPage() {
         setServerError(result.message || "Login failed");
       }
     } catch (err) {
-      setServerError("Something went wrong. Try again.");
+      setServerError("Something went wrong. Try again." + err);
     } finally {
       setLoading(false);
     }
