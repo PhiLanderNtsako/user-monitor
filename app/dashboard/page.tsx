@@ -2,13 +2,14 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { formatDateTime } from "../utils/formatDateTime";
+import Link from "next/link";
 
 type User = {
 	id: number;
 	user_first_name: string;
 	user_last_name: string;
 	extension_number: string;
-	user_email: string;
+	email: string;
 	status_name: string;
 	status_note: string;
 	updated_at: string;
@@ -20,8 +21,9 @@ export default function AdminPage() {
 	const [error, setError] = useState("");
 
 	const [search, setSearch] = useState("");
-	const [sortKey, setSortKey] = useState<keyof User>("user_first_name");
-	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+	const [sortKey, setSortKey] = useState<keyof User>("updated_at");
+	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+	const [loading, setLoading] = useState(true);
 
 	const statusColors = {
 		Available: "bg-emerald-500 text-white", // Fresh green for available
@@ -37,21 +39,36 @@ export default function AdminPage() {
 		Default: "bg-gray-200 text-gray-800", // Default light gray
 	};
 
+	const departmentId = useMemo(() => {
+		const userStr = localStorage.getItem("user");
+		if (!userStr) return null;
+		try {
+			const userObj = JSON.parse(userStr);
+			return userObj.department || null;
+		} catch (err) {
+			console.error("Error parsing user from localStorage:", err);
+			return null;
+		}
+	}, []);
+
 	useEffect(() => {
-		const fetchUsers = () => {
-			fetch(
-				"https://test.apbco.co.za/switchboard/api/public/index.php/status/current"
-			)
-				.then((res) => res.json())
-				.then((data) => {
-					if (data.status) {
-						setUsers(data.data);
-						setError("");
-					} else {
-						setError(data.message || "Failed to fetch users");
-					}
-				})
-				.catch(() => setError("Failed to fetch users"));
+		const fetchUsers = async () => {
+			try {
+				const response = await fetch(
+					`https://test.apbco.co.za/switchboard/api/public/index.php/status/current/?departmentid=${departmentId}`
+				);
+				const data = await response.json();
+				if (data.status) {
+					setUsers(data.data);
+					setError("");
+				} else {
+					setError(data.message || "Failed to fetch users");
+				}
+			} catch (err) {
+				setError("Failed to fetch users" + err);
+			} finally {
+				setLoading(false);
+			}
 		};
 
 		fetchUsers(); // initial fetch
@@ -124,12 +141,10 @@ export default function AdminPage() {
 			}
 		}
 
-		if (!token || role === "user") {
+		if (!token || role === "user" || !departmentId) {
 			router.replace("/login?unauthorized=true");
 		}
 	}, [router]);
-
-	// if (checkingAuth) return <p className="p-6">Checking permissions...</p>;
 
 	return (
 		<div className="max-w-6xl mx-auto mt-8 p-6 bg-white rounded-md shadow-md">
@@ -146,87 +161,111 @@ export default function AdminPage() {
 				/>
 			</div>
 
-			{/* Table */}
-			{error ? (
-				<p className="text-red-600">{error}</p>
-			) : (
-				<div className="overflow-x-auto">
-					<table className="min-w-full table-auto border-collapse border border-gray-300">
-						<thead>
-							<tr>
-								{[
-									"name",
-									"extension_number",
-									"current_status",
-									"updated_at",
-								].map((key) => (
-									<th
-										key={key}
-										onClick={() =>
-											onSort(key as keyof User)
-										}
-										className="cursor-pointer border border-gray-300 px-4 py-2 text-left select-none"
-									>
-										<div className="flex items-center gap-1">
-											{key
-												.replace("_", " ")
-												.toUpperCase()}
-											{sortKey === key && (
-												<span>
-													{sortOrder === "asc"
-														? "▲"
-														: "▼"}
-												</span>
-											)}
-										</div>
-									</th>
-								))}
-								{/* <th className="border border-gray-300 px-4 py-2">Action</th> */}
-							</tr>
-						</thead>
-						<tbody>
-							{filteredUsers.length === 0 ? (
+			<div className="bg-white rounded-lg shadow overflow-hidden">
+				{loading ? (
+					<div className="p-8 text-center">
+						<div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+						<p className="mt-2 text-gray-600">Loading users...</p>
+					</div>
+				) : error ? (
+					<div className="p-4 bg-red-50 border-l-4 border-red-500">
+						<p className="text-red-700">{error}</p>
+					</div>
+				) : (
+					<div className="overflow-x-auto">
+						<table className="min-w-full divide-y divide-gray-200">
+							<thead className="bg-gray-50">
 								<tr>
-									<td colSpan={5} className="text-center p-4">
-										No users found.
-									</td>
-								</tr>
-							) : (
-								filteredUsers.map((user) => (
-									<tr
-										key={user.id}
-										className="hover:bg-gray-100"
-									>
-										<td className="border border-gray-300 px-4 py-2">
-											{user.user_first_name}{" "}
-											{user.user_last_name}
-										</td>
-										<td className="border border-gray-300 px-4 py-2">
-											{user.extension_number}
-										</td>
-										<td className="border border-gray-300 px-4 py-2 flex items-center gap-2">
-											<span
-												className={`w-3 h-3 rounded-full inline-block ${
-													statusColors[
-														user.status_name as keyof typeof statusColors
-													] || statusColors["Default"]
-												}`}
-											></span>
-											{user.status_name}
-										</td>
-										<td className="border border-gray-300 px-4 py-2">
-											{
-												formatDateTime(user.updated_at)
-													.relative
+									{[
+										"name",
+										"extension_number",
+										"current_status",
+										"updated_at",
+									].map((key) => (
+										<th
+											key={key}
+											onClick={() =>
+												onSort(key as keyof User)
 											}
+											className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+										>
+											<div className="flex items-center">
+												{key.replace("_", " ")}
+												{sortKey === key && (
+													<span className="ml-1">
+														{sortOrder === "asc"
+															? "↑"
+															: "↓"}
+													</span>
+												)}
+											</div>
+										</th>
+									))}
+								</tr>
+							</thead>
+							<tbody className="bg-white divide-y divide-gray-200">
+								{filteredUsers.length === 0 ? (
+									<tr>
+										<td
+											colSpan={6}
+											className="px-6 py-4 text-center text-gray-500"
+										>
+											No users found
 										</td>
 									</tr>
-								))
-							)}
-						</tbody>
-					</table>
-				</div>
-			)}
+								) : (
+									filteredUsers.map((user) => (
+										<tr
+											key={user.id}
+											className="hover:bg-gray-50"
+										>
+											<td className="px-6 py-4 whitespace-nowrap">
+												<div className="flex items-center">
+													<div className="ml-4">
+														<div className="text-sm font-medium text-gray-900">
+															{
+																user.user_first_name
+															}{" "}
+															{
+																user.user_last_name
+															}
+														</div>
+													</div>
+												</div>
+											</td>
+											<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+												{user.extension_number}
+											</td>
+											<td className="px-6 py-4 whitespace-nowrap">
+												<span
+													className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+														${
+															statusColors[
+																user.status_name as keyof typeof statusColors
+															] ||
+															statusColors[
+																"Default"
+															]
+														}`}
+												>
+													{user.status_name}
+												</span>
+											</td>
+											<td className="px-6 py-4 whitespace-nowrap">
+												{
+													formatDateTime(
+														user.updated_at
+													).relative
+												}
+											</td>
+										</tr>
+									))
+								)}
+							</tbody>
+						</table>
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

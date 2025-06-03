@@ -38,7 +38,20 @@ export default function AdminPage() {
 		start_time: "",
 		end_time: "",
   });
-  const [formSubmitting, setFormSubmitting] = useState(false);
+	const [formSubmitting, setFormSubmitting] = useState(false);
+
+	const departmentId = useMemo(() => {
+		const userStr = localStorage.getItem("user");
+		if (!userStr) return null;
+		try {
+			const userObj = JSON.parse(userStr);
+			return userObj.department || null;
+		} catch (err) {
+			console.error("Error parsing user from localStorage:", err);
+			return null;
+		}
+	}, []);
+
 
   useEffect(() => {
 		const fetchUsers = () => {

@@ -97,9 +97,9 @@ export default function UserPage() {
 		"In a Meeting": "bg-blue-500 text-white", // Professional blue for meetings
 		"On Leave": "bg-purple-500 text-white", // Distinct purple for leave
 		"On Sick Leave": "bg-red-500 text-white", // Alert red for sick leave
-		"Logged Out": "bg-gray-400 text-gray-800", // Neutral gray for logged out
+		"Logged Out": "bg-gray-400 text-white-800", // Neutral gray for logged out
 		"On Call": "bg-indigo-600 text-white", // Rich indigo for on call
-		"Away from Desk": "bg-yellow-300 text-gray-800", // Light yellow for away
+		"Away from Desk": "bg-yellow-300 text-black-800", // Light yellow for away
 		Busy: "bg-orange-500 text-white", // Vibrant orange for busy
 		"On Break": "bg-cyan-400 text-gray-800", // Refreshing cyan for breaks
 		Default: "bg-gray-200 text-gray-800", // Default light gray
@@ -317,7 +317,8 @@ export default function UserPage() {
 										key={id}
 										className={`border border-gray-200 p-5 rounded-lg ${
 											statusColors[
-												user.status_name as keyof typeof statusColors
+												(status_name?.trim() ||
+													"Default") as keyof typeof statusColors
 											] || statusColors["Default"]
 										} shadow-sm hover:shadow-md transition-shadow`}
 									>
@@ -373,7 +374,7 @@ export default function UserPage() {
 							}
 							className={`hover:cursor-pointer px-4 py-4 rounded-full text-sm font-medium ${
 								statusColors[
-									user.status_name as keyof typeof statusColors
+									status.name as keyof typeof statusColors
 								] || statusColors["Default"]
 							}`}
 						>

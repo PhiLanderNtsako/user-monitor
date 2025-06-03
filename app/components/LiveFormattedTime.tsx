@@ -19,9 +19,9 @@ export default function LiveFormattedTime({
   }, [timestamp]);
 
   return (
-    <span className="text-sm text-gray-100 mt-1 md:mt-0">
-      {time.formatted}{" "}
-      <span className="text-xs text-gray-100">({time.relative})</span>
-    </span>
+		<span className="text-sm text-black-100 mt-1 md:mt-0">
+			{time.formatted}{" "}
+			<span className="text-xs text-black-100">({time.relative})</span>
+		</span>
   );
 }

@@ -43,6 +43,7 @@ export default function UsersPage() {
 			? JSON.parse(localStorage.getItem("user") || "{}")
 			: null;
 	const userId = user?.id;
+	const departmentId = user?.department;
 	const [submitMessage, setSubmitMessage] = useState({ text: "", type: "" });
 	const router = useRouter();
 	const [users, setUsers] = useState<User[]>([]);
@@ -66,7 +67,7 @@ export default function UsersPage() {
 		const fetchUsers = async () => {
 			try {
 				const response = await fetch(
-					"https://test.apbco.co.za/switchboard/api/public/index.php/users/"
+					`https://test.apbco.co.za/switchboard/api/public/index.php/users/?departmentid=${departmentId}`
 				);
 				const data = await response.json();
 				if (data.status) {
@@ -91,7 +92,7 @@ export default function UsersPage() {
 		const fetchDepartments = async () => {
 			try {
 				const response = await fetch(
-					"https://test.apbco.co.za/switchboard/api/public/index.php/users/departments/"
+					`https://test.apbco.co.za/switchboard/api/public/index.php/users/departments/?departmentid=${departmentId}`
 				);
 				const data = await response.json();
 				setDepartments(data.data);
@@ -561,9 +562,6 @@ export default function UsersPage() {
 											{...register("department_id")}
 											className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
 										>
-											<option value="">
-												Select Department
-											</option>
 											{departments.map((department) => (
 												<option
 													key={department.id}
@@ -594,17 +592,6 @@ export default function UsersPage() {
 												{errors.password.message}
 											</p>
 										)}
-									</div>
-
-									<div>
-										<label className="block text-sm font-medium text-gray-700 mb-1">
-											Verification Code
-										</label>
-										<input
-											type="text"
-											{...register("verification_code")}
-											className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-										/>
 									</div>
 								</div>
 
