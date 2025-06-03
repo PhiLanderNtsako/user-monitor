@@ -2,7 +2,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { formatDateTime } from "../utils/formatDateTime";
-import Link from "next/link";
 
 type User = {
 	id: number;
@@ -75,7 +74,7 @@ export default function AdminPage() {
 		const interval = setInterval(fetchUsers, 1000); // fetch every 5 seconds
 
 		return () => clearInterval(interval); // cleanup on unmount
-	}, []);
+	}, [departmentId]);
 
 	// Sorting & filtering logic
 	const filteredUsers = useMemo(() => {
@@ -144,7 +143,7 @@ export default function AdminPage() {
 		if (!token || role === "user" || !departmentId) {
 			router.replace("/login?unauthorized=true");
 		}
-	}, [router]);
+	}, [departmentId, router]);
 
 	return (
 		<div className="max-w-6xl mx-auto mt-8 p-6 bg-white rounded-md shadow-md">

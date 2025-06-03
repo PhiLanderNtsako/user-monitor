@@ -86,7 +86,7 @@ export default function UsersPage() {
 		fetchUsers();
 		const interval = setInterval(fetchUsers, 10000);
 		return () => clearInterval(interval);
-	}, []);
+	}, [departmentId]);
 
 	useEffect(() => {
 		const fetchDepartments = async () => {
@@ -102,7 +102,7 @@ export default function UsersPage() {
 		};
 
 		fetchDepartments();
-	}, []);
+	}, [departmentId]);
 
 	// Sorting & filtering logic
 	const filteredUsers = useMemo(() => {
