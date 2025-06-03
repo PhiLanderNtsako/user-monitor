@@ -38,18 +38,11 @@ export default function AdminPage() {
 		Default: "bg-gray-200 text-gray-800", // Default light gray
 	};
 
-	const departmentId = useMemo(() => {
-		const userStr = localStorage.getItem("user");
-		if (!userStr) return null;
-		try {
-			const userObj = JSON.parse(userStr);
-			return userObj.department || null;
-		} catch (err) {
-			console.error("Error parsing user from localStorage:", err);
-			return null;
-		}
-	}, []);
-
+		const user =
+			typeof window !== "undefined"
+				? JSON.parse(localStorage.getItem("user") || "{}")
+				: null;
+		const departmentId = user?.department;
 	useEffect(() => {
 		const fetchUsers = async () => {
 			try {
