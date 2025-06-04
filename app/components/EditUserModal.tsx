@@ -3,12 +3,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
-type Departments = {
-	id: string;
-	name: string;
-	slug: string;
-};
-
 type Roles = {
 	id: string;
 	type: string;
@@ -29,11 +23,17 @@ type FormData = {
 	user_role: string;
 };
 
+type UserData = {
+	user_id: number;
+	department_name: string;
+	department_id?: number;
+};
+
 type EditUserModalProps = {
 	user_id?: number | undefined; // or string if that's the case
 	departmentId?: number | null; // or string if that's the case
 	modalClose: () => void;
-	userData: object; // ideally, use a proper type here instead of 'any'
+	userData: UserData; // ideally, use a proper type here instead of 'any'
 };
 
 // export default function EditUserModal({ register, reset, onClose, handleSubmit, setSubmitMessage, getMessageClass, submitMessage, onSubmit, errors, isSubmitting}) {
@@ -41,7 +41,6 @@ export default function EditUserModal({
 	user_id,
 	modalClose,
 	userData,
-	departmentId,
 }: EditUserModalProps) {
 	const router = useRouter();
 	const [submitMessage, setSubmitMessage] = useState({ text: "", type: "" });
