@@ -7,91 +7,91 @@ import { format } from "date-fns";
 import EditUserModal from "@/app/components/EditUserModal";
 
 type User = {
-  user_id: number;
-  first_name: string;
-  last_name: string;
-  extension_number: string;
-  email: string;
-  role: string;
-  user_role: string;
-  created_at: string;
-  department_name: string;
-  department_id?: number;
-  cellphone?: string;
-  telephone?: string;
+	user_id: number;
+	first_name: string;
+	last_name: string;
+	extension_number: string;
+	email: string;
+	role: string;
+	user_role: string;
+	created_at: string;
+	department_name: string;
+	department_id: number;
+	cellphone?: string;
+	telephone?: string;
 };
 
 type StatusLog = {
-  id: number;
-  status_name: string;
-  status_note?: string;
-  start_time: string;
-  end_time: string;
-  created_at: string;
+	id: number;
+	status_name: string;
+	status_note?: string;
+	start_time: string;
+	end_time: string;
+	created_at: string;
 };
 
 type CurrentStatus = {
-  id: number;
-  status_name: string;
-  status_note: string;
-  start_time: string;
-  end_time: string;
-  created_at: string;
-  updated_at: string;
-  current_status_id: string;
-  updated_by: string;
+	id: number;
+	status_name: string;
+	status_note: string;
+	start_time: string;
+	end_time: string;
+	created_at: string;
+	updated_at: string;
+	current_status_id: string;
+	updated_by: string;
 };
 
 type StatusOption = {
-  id: number;
-  name: string;
+	id: number;
+	name: string;
 };
 
 type FormData = {
-  note: string;
-  start_time: string;
-  end_time: string;
-  status_id: number;
+	note: string;
+	start_time: string;
+	end_time: string;
+	status_id: number;
 };
 
 function groupLogsByDate(logs: StatusLog[]) {
-  return logs.reduce((acc, log) => {
-    const dateKey = format(new Date(log.created_at), "yyyy-MM-dd");
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(log);
-    return acc;
-  }, {} as Record<string, StatusLog[]>);
+	return logs.reduce((acc, log) => {
+		const dateKey = format(new Date(log.created_at), "yyyy-MM-dd");
+		if (!acc[dateKey]) acc[dateKey] = [];
+		acc[dateKey].push(log);
+		return acc;
+	}, {} as Record<string, StatusLog[]>);
 }
 
 export default function UserPage() {
-  // Assume user ID is stored in localStorage after login
-  const user =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("user") || "{}")
-      : null;
-  const userId = user?.id;
+	// Assume user ID is stored in localStorage after login
+	const userAuth =
+		typeof window !== "undefined"
+			? JSON.parse(localStorage.getItem("user") || "{}")
+			: null;
+	const userId = userAuth?.id;
 
-  const [logs, setLogs] = useState<StatusLog[]>([]);
-  const [loadingLogs, setLoadingLogs] = useState(false);
-  const [errorLogs, setErrorLogs] = useState("");
-  const [statuses, setStatuses] = useState<StatusOption[]>([]);
-  const [userData, setUserData] = useState<User | object>([]);
-  const [currentStatus, setCurrentStatus] = useState<CurrentStatus[]>([]);
-  const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>(
+	const [logs, setLogs] = useState<StatusLog[]>([]);
+	const [loadingLogs, setLoadingLogs] = useState(false);
+	const [errorLogs, setErrorLogs] = useState("");
+	const [statuses, setStatuses] = useState<StatusOption[]>([]);
+	const [user, setUser] = useState<User | null>(null);
+	const [currentStatus, setCurrentStatus] = useState<CurrentStatus[]>([]);
+	const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>(
 		{}
-  );
-  const [isModalOpen, setIsModalOpen] = useState(false);
+	);
+	const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const groupedLogs = groupLogsByDate(logs);
+	const groupedLogs = groupLogsByDate(logs);
 
-  const toggleDate = (date: string) => {
+	const toggleDate = (date: string) => {
 		setExpandedDates((prev) => ({
 			...prev,
 			[date]: !prev[date],
 		}));
-  };
+	};
 
-  const statusColors = {
+	const statusColors = {
 		Available: "bg-emerald-500 text-white", // Fresh green for available
 		"On Lunch": "bg-amber-400 text-gray-800", // Warm yellow for lunch
 		"In a Meeting": "bg-blue-500 text-white", // Professional blue for meetings
@@ -103,19 +103,18 @@ export default function UserPage() {
 		Busy: "bg-orange-500 text-white", // Vibrant orange for busy
 		"On Break": "bg-cyan-400 text-gray-800", // Refreshing cyan for breaks
 		Default: "bg-gray-200 text-gray-800", // Default light gray
-  };
+	};
 
-  // Fetch status logs on mount & userId change
-  useEffect(() => {
+	// Fetch status logs on mount & userId change
+	useEffect(() => {
 		const fetchUser = async () => {
 			try {
 				const response = await fetch(
 					`https://test.apbco.co.za/switchboard/api/public/index.php/users/?userid=${userId}`
 				);
 				const data = await response.json();
-				console.log(data);
 				if (data.status === "success") {
-					setUserData(data.data[0]);
+					setUser(data.data[0]);
 				} else {
 					setErrorLogs(data.message || "Failed to fetch user");
 				}
@@ -127,9 +126,9 @@ export default function UserPage() {
 		};
 
 		fetchUser();
-  }, [userId]);
+	}, [userId]);
 
-  useEffect(() => {
+	useEffect(() => {
 		if (!userId) return;
 
 		setLoadingLogs(true);
@@ -147,9 +146,9 @@ export default function UserPage() {
 			})
 			.catch(() => setErrorLogs("Failed to load logs."))
 			.finally(() => setLoadingLogs(false));
-  }, [userId]);
+	}, [userId]);
 
-  useEffect(() => {
+	useEffect(() => {
 		if (!userId) return;
 
 		setLoadingLogs(true);
@@ -167,9 +166,9 @@ export default function UserPage() {
 			})
 			.catch(() => setErrorLogs("Failed to load logs."))
 			.finally(() => setLoadingLogs(false));
-  }, [userId]);
+	}, [userId]);
 
-  useEffect(() => {
+	useEffect(() => {
 		const fetchStatuses = async () => {
 			try {
 				const response = await fetch(
@@ -183,9 +182,9 @@ export default function UserPage() {
 		};
 
 		fetchStatuses();
-  }, []);
+	}, []);
 
-  const onSubmit = async (formData: FormData) => {
+	const onSubmit = async (formData: FormData) => {
 		if (!userId) return;
 
 		const currentStatusId = currentStatus?.[0]?.id;
@@ -227,9 +226,9 @@ export default function UserPage() {
 			console.error("Fetch error:", err);
 			alert("Failed to save status.");
 		}
-  };
+	};
 
-  const fetchStatusLogs = async () => {
+	const fetchStatusLogs = async () => {
 		if (!userId) return;
 		try {
 			const res = await fetch(
@@ -240,9 +239,9 @@ export default function UserPage() {
 		} catch {
 			console.error("Failed to refresh status logs.");
 		}
-  };
+	};
 
-  const fetchCurrentStatus = async () => {
+	const fetchCurrentStatus = async () => {
 		if (!userId) return;
 		try {
 			const res = await fetch(
@@ -253,12 +252,12 @@ export default function UserPage() {
 		} catch {
 			console.error("Failed to refresh current status.");
 		}
-  };
+	};
 
-  const router = useRouter();
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
+	const router = useRouter();
+	const [authorized, setAuthorized] = useState<boolean | null>(null);
 
-  useEffect(() => {
+	useEffect(() => {
 		const token = localStorage.getItem("token"); // or sessionStorage, cookie, etc.
 
 		if (!token) {
@@ -266,13 +265,13 @@ export default function UserPage() {
 		} else {
 			setAuthorized(true);
 		}
-  }, [router]);
+	}, [router]);
 
-  if (authorized === null) {
+	if (authorized === null) {
 		return <p>Checking login...</p>; // You can show a spinner here
-  }
+	}
 
-  return (
+	return (
 		<div className="max-w-6xl mx-auto p-4 sm:p-6 mt-8 p-6 bg-white rounded-md shadow-md">
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -451,13 +450,13 @@ export default function UserPage() {
 				)}
 			</section>
 			{/* Edit User Modal */}
-			{isModalOpen && (
+			{isModalOpen && user && (
 				<EditUserModal
-					userData={userData}
+					userData={user}
 					modalClose={() => setIsModalOpen(false)}
 					user_id={userId}
 				/>
 			)}
 		</div>
-  );
+	);
 }

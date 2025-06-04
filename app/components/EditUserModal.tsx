@@ -26,14 +26,14 @@ type FormData = {
 type UserData = {
 	user_id: number;
 	department_name: string;
-	department_id?: number;
+	department_id: number;
 };
 
 type EditUserModalProps = {
 	user_id?: number | undefined; // or string if that's the case
 	departmentId?: number | null; // or string if that's the case
 	modalClose: () => void;
-	userData: UserData; // ideally, use a proper type here instead of 'any'
+	userData: UserData;
 };
 
 // export default function EditUserModal({ register, reset, onClose, handleSubmit, setSubmitMessage, getMessageClass, submitMessage, onSubmit, errors, isSubmitting}) {

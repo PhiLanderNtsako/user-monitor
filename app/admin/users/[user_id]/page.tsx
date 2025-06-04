@@ -14,7 +14,7 @@ type User = {
 	user_role: string;
 	created_at: string;
 	department_name: string;
-	department_id?: number;
+	department_id: number;
 	cellphone?: string;
 	telephone?: string;
 };
