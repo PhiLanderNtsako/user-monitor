@@ -56,11 +56,7 @@ export default function UserPage() {
 		const token = localStorage.getItem("token");
 		const user_session = JSON.parse(localStorage.getItem("user") || "{}");
 
-		if (
-			!token ||
-			user_session.user_role !== "admin" ||
-			user_session.user_role !== "super"
-		) {
+		if (!token || user_session.user_role === "admin") {
 			router.replace("/login?unauthorized=true");
 		}
 	}, [router]);

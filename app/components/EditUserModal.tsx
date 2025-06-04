@@ -31,6 +31,7 @@ type FormData = {
 
 type EditUserModalProps = {
 	user_id?: number | undefined; // or string if that's the case
+	departmentId?: number | null; // or string if that's the case
 	modalClose: () => void;
 	userData: object; // ideally, use a proper type here instead of 'any'
 };
@@ -40,10 +41,10 @@ export default function EditUserModal({
 	user_id,
 	modalClose,
 	userData,
+	departmentId,
 }: EditUserModalProps) {
 	const router = useRouter();
 	const [submitMessage, setSubmitMessage] = useState({ text: "", type: "" });
-	const [departments, setDepartments] = useState<Departments[]>([]);
 	const [roles, setRoles] = useState<Roles[]>([]);
 
 	const {
@@ -54,18 +55,6 @@ export default function EditUserModal({
 	} = useForm<FormData>();
 
 	useEffect(() => {
-		const fetchDepartments = async () => {
-			try {
-				const response = await fetch(
-					"https://test.apbco.co.za/switchboard/api/public/index.php/users/departments/"
-				);
-				const data = await response.json();
-				setDepartments(data.data);
-			} catch (err) {
-				console.error("Failed to fetch departments", err);
-			}
-		};
-
 		const fetchRoles = async () => {
 			try {
 				const response = await fetch(
@@ -77,10 +66,7 @@ export default function EditUserModal({
 				console.error("Failed to fetch roles", err);
 			}
 		};
-
-		fetchDepartments();
 		fetchRoles();
-		console.log(userData);
 		reset(userData);
 	}, [userData, reset]);
 
@@ -319,12 +305,9 @@ export default function EditUserModal({
 								{...register("department_id")}
 								className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
 							>
-								<option value="">Select Department</option>
-								{departments.map((dept) => (
-									<option key={dept.id} value={dept.id}>
-										{dept.name}
-									</option>
-								))}
+								<option value={userData.department_id}>
+									{userData.department_name}
+								</option>
 							</select>
 						</div>
 
