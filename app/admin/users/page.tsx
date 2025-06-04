@@ -185,7 +185,6 @@ export default function UsersPage() {
 			);
 
 			const result = await res.json();
-			console.log(result);
 
 			if (result.status === "success") {
 				setSubmitMessage({
