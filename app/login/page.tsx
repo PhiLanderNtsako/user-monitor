@@ -40,7 +40,6 @@ export default function LoginPage() {
 					body: JSON.stringify(data),
 				}
 			);
-
 			const result = await response.json();
 
 			if (result.status === "success") {
@@ -50,7 +49,8 @@ export default function LoginPage() {
 
 				if (
 					result.user.user_role === "admin" ||
-					result.user.user_role === "operator"
+					result.user.user_role === "operator" ||
+					result.user.user_role === "super"
 				) {
 					router.push("/dashboard");
 				} else {

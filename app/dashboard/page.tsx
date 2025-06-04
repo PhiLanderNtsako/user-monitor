@@ -42,7 +42,7 @@ export default function AdminPage() {
 			typeof window !== "undefined"
 				? JSON.parse(localStorage.getItem("user") || "{}")
 				: null;
-		const departmentId = user?.department;
+	const departmentId = user?.user_role == "super" ? null : user?.department;
 	useEffect(() => {
 		const fetchUsers = async () => {
 			try {
@@ -133,7 +133,7 @@ export default function AdminPage() {
 			}
 		}
 
-		if (!token || role === "user" || !departmentId) {
+		if (!token || role === "user") {
 			router.replace("/login?unauthorized=true");
 		}
 	}, [departmentId, router]);

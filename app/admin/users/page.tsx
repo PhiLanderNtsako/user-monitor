@@ -43,7 +43,7 @@ export default function UsersPage() {
 			? JSON.parse(localStorage.getItem("user") || "{}")
 			: null;
 	const userId = user?.id;
-	const departmentId = user?.department;
+	const departmentId = user?.user_role == "super" ? null : user?.department;
 	const [submitMessage, setSubmitMessage] = useState({ text: "", type: "" });
 	const router = useRouter();
 	const [users, setUsers] = useState<User[]>([]);
@@ -60,6 +60,7 @@ export default function UsersPage() {
 		register,
 		handleSubmit,
 		reset,
+		setValue,
 		formState: { errors, isSubmitting },
 	} = useForm<FormData>();
 
@@ -184,6 +185,7 @@ export default function UsersPage() {
 			);
 
 			const result = await res.json();
+			console.log(result);
 
 			if (result.status === "success") {
 				setSubmitMessage({
@@ -218,6 +220,16 @@ export default function UsersPage() {
 			default:
 				return "bg-blue-100 border-blue-400 text-blue-700";
 		}
+	};
+
+	const generatePassword = () => {
+		const chars =
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+		let password = "";
+		for (let i = 0; i < 12; i++) {
+			password += chars.charAt(Math.floor(Math.random() * chars.length));
+		}
+		setValue("password", password); // sets the password field
 	};
 
 	return (
@@ -579,14 +591,23 @@ export default function UsersPage() {
 										<label className="block text-sm font-medium text-gray-700 mb-1">
 											Password *
 										</label>
-										<input
-											type="password"
-											{...register("password", {
-												required:
-													"Password is required",
-											})}
-											className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-										/>
+										<div className="flex space-x-2">
+											<input
+												type="text"
+												{...register("password", {
+													required:
+														"Password is required",
+												})}
+												className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+											/>
+											<button
+												type="button"
+												onClick={generatePassword}
+												className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+											>
+												Generate
+											</button>
+										</div>
 										{errors.password && (
 											<p className="mt-1 text-sm text-red-600">
 												{errors.password.message}
