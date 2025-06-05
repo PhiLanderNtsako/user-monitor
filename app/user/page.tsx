@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LiveFormattedTime from "../components/LiveFormattedTime"; // Client-side logic
-import { format } from "date-fns";
 import EditUserModal from "@/app/components/EditUserModal";
+import UserStatusLog from "@/app/components/UserStatusLog";
 
 type User = {
 	user_id: number;
@@ -54,15 +54,6 @@ type FormData = {
 	status_id: number;
 };
 
-function groupLogsByDate(logs: StatusLog[]) {
-	return logs.reduce((acc, log) => {
-		const dateKey = format(new Date(log.created_at), "yyyy-MM-dd");
-		if (!acc[dateKey]) acc[dateKey] = [];
-		acc[dateKey].push(log);
-		return acc;
-	}, {} as Record<string, StatusLog[]>);
-}
-
 export default function UserPage() {
 	// Assume user ID is stored in localStorage after login
 	const userAuth =
@@ -77,19 +68,8 @@ export default function UserPage() {
 	const [statuses, setStatuses] = useState<StatusOption[]>([]);
 	const [user, setUser] = useState<User | null>(null);
 	const [currentStatus, setCurrentStatus] = useState<CurrentStatus[]>([]);
-	const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>(
-		{}
-	);
+
 	const [isModalOpen, setIsModalOpen] = useState(false);
-
-	const groupedLogs = groupLogsByDate(logs);
-
-	const toggleDate = (date: string) => {
-		setExpandedDates((prev) => ({
-			...prev,
-			[date]: !prev[date],
-		}));
-	};
 
 	const statusColors = {
 		Available: "bg-emerald-500 text-white", // Fresh green for available
@@ -272,7 +252,7 @@ export default function UserPage() {
 	}
 
 	return (
-		<div className="max-w-6xl mx-auto p-4 sm:p-6 mt-8 p-6 bg-white rounded-md shadow-md">
+		<div className="max-w-6xl mx-auto sm:p-6 mt-8 p-6 bg-white rounded-md shadow-md">
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
 				<div>
@@ -281,12 +261,12 @@ export default function UserPage() {
 					</h1>
 					<p className="text-gray-600">Update and view your status</p>
 				</div>
-				<button
+				{/* <button
 					onClick={() => setIsModalOpen(true)}
 					className="bg-gray-100 hover:bg-gray-600 text-black hover:text-white  px-4 py-2 rounded-md transition-colors w-full sm:w-auto cursor-pointer"
 				>
 					Update Profile
-				</button>
+				</button> */}
 			</div>
 
 			{/* Logs Section */}
@@ -383,7 +363,7 @@ export default function UserPage() {
 				</div>
 			</section>
 
-			<section className="mt-8">
+			{/* <section className="mt-8">
 				<h2 className="text-xl font-semibold mb-4">User Status Logs</h2>
 
 				{loadingLogs ? (
@@ -448,7 +428,13 @@ export default function UserPage() {
 							</div>
 						))
 				)}
-			</section>
+			</section> */}
+			<UserStatusLog
+				logs={logs}
+				loadingLogs={loadingLogs}
+				errorLogs={errorLogs}
+			/>
+
 			{/* Edit User Modal */}
 			{isModalOpen && user && (
 				<EditUserModal

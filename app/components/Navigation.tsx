@@ -40,9 +40,7 @@ export default function Navigation() {
 			}
 
 			setIsLoggedIn(!!token);
-			setIsAdmin(
-				role === "admin" || role === "operator" || role === "super"
-			);
+			setIsAdmin(role === "admin" || role === "super");
 		};
 
 		handleAuthChange(); // run on mount
@@ -121,7 +119,7 @@ export default function Navigation() {
 							</>
 						) : (
 							<Link
-								href={`/user/${userData.name}`}
+								href={`/admin/users/${userData.id}`}
 								className={`hover:text-blue-600 ${
 									isActive("/user")
 										? "text-blue-600 font-semibold"

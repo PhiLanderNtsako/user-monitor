@@ -38,10 +38,17 @@ export default function AdminPage() {
 		Default: "bg-gray-200 text-gray-800", // Default light gray
 	};
 
-		const user =
-			typeof window !== "undefined"
-				? JSON.parse(localStorage.getItem("user") || "{}")
-				: null;
+	const columns: { label: string; key: keyof User | "name" }[] = [
+		{ label: "Name", key: "name" }, // We'll handle this as a custom derived field
+		{ label: "Extension", key: "extension_number" },
+		{ label: "Current Status", key: "status_name" },
+		{ label: "Updated At", key: "updated_at" },
+	];
+
+	const user =
+		typeof window !== "undefined"
+			? JSON.parse(localStorage.getItem("user") || "{}")
+			: null;
 	const departmentId = user?.user_role == "super" ? null : user?.department;
 	useEffect(() => {
 		const fetchUsers = async () => {
@@ -77,10 +84,9 @@ export default function AdminPage() {
 			const s = search.toLowerCase();
 			filtered = filtered.filter(
 				(u) =>
-					u.user_first_name.toLowerCase().includes(s) ||
-					u.extension_number.toLowerCase().includes(s) ||
-					u.status_name.toLowerCase().includes(s) ||
-					u.updated_at.toLowerCase().includes(s)
+					(u.user_last_name?.toLowerCase() || "").includes(s) ||
+					(u.extension_number?.toLowerCase() || "").includes(s) ||
+					(u.status_name?.toLowerCase() || "").includes(s)
 			);
 		}
 
@@ -168,28 +174,30 @@ export default function AdminPage() {
 						<table className="min-w-full divide-y divide-gray-200">
 							<thead className="bg-gray-50">
 								<tr>
-									{[
-										"name",
-										"extension_number",
-										"current_status",
-										"updated_at",
-									].map((key) => (
+									{columns.map(({ label, key }) => (
 										<th
 											key={key}
 											onClick={() =>
-												onSort(key as keyof User)
+												onSort(
+													key === "name"
+														? "user_last_name"
+														: (key as keyof User)
+												)
 											}
 											className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
 										>
 											<div className="flex items-center">
-												{key.replace("_", " ")}
-												{sortKey === key && (
+												{label}
+												{sortKey === key ||
+												(key === "name" &&
+													sortKey ===
+														"user_last_name") ? (
 													<span className="ml-1">
 														{sortOrder === "asc"
 															? "↑"
 															: "↓"}
 													</span>
-												)}
+												) : null}
 											</div>
 										</th>
 									))}
@@ -216,10 +224,10 @@ export default function AdminPage() {
 													<div className="ml-4">
 														<div className="text-sm font-medium text-gray-900">
 															{
-																user.user_first_name
+																user.user_last_name
 															}{" "}
 															{
-																user.user_last_name
+																user.user_first_name
 															}
 														</div>
 													</div>

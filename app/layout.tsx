@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import Navigation from "./components/Navigation"; // Client-side logic
 
 export const metadata = {
-  title: "Work Status App",
-  description: "Track and view work statuses in real time",
+	title: "Switchboard Monitor",
+	description: "Track and view work statuses in real time",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

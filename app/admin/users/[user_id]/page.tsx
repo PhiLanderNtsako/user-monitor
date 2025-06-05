@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import EditUserModal from "@/app/components/EditUserModal";
+import UserStatusLog from "@/app/components/UserStatusLog";
 
 type User = {
 	user_id: number;
@@ -19,6 +20,19 @@ type User = {
 	telephone?: string;
 };
 
+type StatusLog = {
+	id: number;
+	status_name: string;
+	status_note?: string;
+	start_time: string;
+	end_time: string;
+	created_at: string;
+};
+
+type UserSession = {
+	user_role: string;
+};
+
 export default function UserPage() {
 	const router = useRouter();
 	const { user_id } = useParams<{ user_id: string }>();
@@ -27,6 +41,12 @@ export default function UserPage() {
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(true);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [logs, setLogs] = useState<StatusLog[]>([]);
+	const [userSession, setUserSession] = useState<UserSession>({
+		user_role: "",
+	});
+	const [loadingLogs, setLoadingLogs] = useState(false);
+	const [errorLogs, setErrorLogs] = useState("");
 
 	useEffect(() => {
 		const fetchUser = async () => {
@@ -47,19 +67,46 @@ export default function UserPage() {
 				setLoading(false);
 			}
 		};
+		setLoadingLogs(true);
+
+		const fetchUserStatusLogs = async () => {
+			try {
+				const response = await fetch(
+					`https://test.apbco.co.za/switchboard/api/public/index.php/status/log/?userid=${user_id}`
+				);
+				const data = await response.json();
+				if (data.status === "success") {
+					setLogs(data.data);
+					setErrorLogs("");
+				} else {
+					setErrorLogs(data.message || "Failed to load logs.");
+				}
+			} catch (err) {
+				setErrorLogs("Failed to fetch user" + err);
+			} finally {
+				setLoadingLogs(false);
+			}
+		};
 
 		fetchUser();
+		fetchUserStatusLogs();
 	}, [user_id]);
 
 	// Auth check
 	useEffect(() => {
 		const token = localStorage.getItem("token");
-		const user_session = JSON.parse(localStorage.getItem("user") || "{}");
+		const user_session = JSON.parse(
+			localStorage.getItem("user") || "{}"
+		) as UserSession;
 
-		if (!token || user_session.user_role === "admin") {
+		setUserSession(user_session);
+
+		if (!token || user_session.user_role === "user") {
 			router.replace("/login?unauthorized=true");
 		}
 	}, [router]);
+
+	const isRegularUser = ["admin", "super"].includes(userSession.user_role);
 
 	if (loading) {
 		return (
@@ -112,12 +159,14 @@ export default function UserPage() {
 					</h1>
 					<p className="text-gray-600">{user.email}</p>
 				</div>
-				<button
-					onClick={() => setIsModalOpen(true)}
-					className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
-				>
-					Edit User
-				</button>
+				{isRegularUser && (
+					<button
+						onClick={() => setIsModalOpen(true)}
+						className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+					>
+						Edit User
+					</button>
+				)}
 			</div>
 
 			<div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -198,6 +247,11 @@ export default function UserPage() {
 					</div>
 				</div>
 			</div>
+			<UserStatusLog
+				logs={logs}
+				loadingLogs={loadingLogs}
+				errorLogs={errorLogs}
+			/>
 
 			<Link
 				href="/admin/users"
