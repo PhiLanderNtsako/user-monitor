@@ -82,12 +82,16 @@ export default function AdminPage() {
 
 		if (search.trim()) {
 			const s = search.toLowerCase();
-			filtered = filtered.filter(
-				(u) =>
-					(u.user_last_name?.toLowerCase() || "").includes(s) ||
+			filtered = filtered.filter((u) => {
+				const fullName =
+					`${u.user_first_name} ${u.user_last_name}`.toLowerCase();
+				return (
+					fullName.includes(s) ||
+					(u.email?.toLowerCase() || "").includes(s) ||
 					(u.extension_number?.toLowerCase() || "").includes(s) ||
 					(u.status_name?.toLowerCase() || "").includes(s)
-			);
+				);
+			});
 		}
 
 		const getSortableValue = (

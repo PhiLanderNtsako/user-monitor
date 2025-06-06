@@ -57,66 +57,87 @@ export default function UserStatusLog({
 			) : (
 				Object.entries(groupedLogs)
 					.sort((a, b) => (a[0] > b[0] ? -1 : 1)) // latest dates first
-					.map(([date, logsForDate]) => (
-						<div
-							key={date}
-							className="mb-4 border rounded-lg shadow-sm"
-						>
-							<button
-								onClick={() => toggleDate(date)}
-								className="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 font-semibold rounded-t-lg"
+					.map(([date, logsForDate]) => {
+						return (
+							<div
+								key={date}
+								className="mb-4 border rounded-lg shadow-sm"
 							>
-								{format(new Date(date), "MMMM d, yyyy")} (
-								{logsForDate.length} log
-								{logsForDate.length > 1 ? "s" : ""})
-							</button>
+								<button
+									onClick={() => toggleDate(date)}
+									className="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 font-semibold rounded-t-lg"
+								>
+									{format(new Date(date), "MMMM d, yyyy")} (
+									{logsForDate.length} status change
+									{logsForDate.length > 1 ? "s" : ""})
+								</button>
 
-							{expandedDates[date] && (
-								<ul className="divide-y">
-									{logsForDate.map((log, index) => {
-										const {
-											id,
-											status_name,
-											created_at,
-										} = log;
-										const nextLog = logsForDate[index + 1]; // the log after this one (older)
-										const duration =
-											nextLog &&
-											formatDistanceStrict(
-												parseISO(created_at),
-												parseISO(nextLog.created_at)
-											);
+								{expandedDates[date] && (
+									<ul className="divide-y">
+										{logsForDate
+											.slice()
+											.reverse()
+											.map((log, index, reversedLogs) => {
+												const {
+													id,
+													status_name,
+													created_at,
+												} = log;
 
-										return (
-											<li
-												key={id}
-												className="p-4 bg-white hover:bg-gray-50 transition"
-											>
-												<div className="flex justify-between items-center mb-1">
-													<span className="text-sm font-medium text-gray-800">
-														{status_name}
-													</span>
-													<span className="text-xs text-gray-500">
-														{format(
-															new Date(
-																created_at
-															),
-															"hh:mm:ss a"
+												const previousLog =
+													reversedLogs[index - 1];
+												const duration =
+													previousLog &&
+													formatDistanceStrict(
+														parseISO(created_at),
+														parseISO(
+															previousLog.created_at
+														)
+													);
+
+												return (
+													<li
+														key={id}
+														className="p-4 bg-white hover:bg-gray-50 transition"
+													>
+														<div className="flex justify-between items-center mb-1">
+															<span className="text-sm font-medium text-gray-800">
+																{status_name}
+															</span>
+															<span className="text-xs text-gray-500">
+																{format(
+																	new Date(
+																		created_at
+																	),
+																	"hh:mm:ss a"
+																)}
+															</span>
+														</div>
+														{index === 0 ? (
+															<p className="text-sm text-green-600 font-semibold">
+																Currently active
+															</p>
+														) : (
+															duration && (
+																<p className="text-sm text-gray-500 italic">
+																	Duration in
+																	this status:{" "}
+																	<strong>
+																		{
+																			duration
+																		}
+																	</strong>
+																</p>
+															)
 														)}
-													</span>
-												</div>
-												{duration && (
-													<p className="text-sm text-gray-500 italic">
-														<strong>({duration})</strong>
-													</p>
-												)}
-											</li>
-										);
-									})}
-								</ul>
-							)}
-						</div>
-					))
+													</li>
+												);
+											})}
+									</ul>
+								)}
+							</div>
+						);
+					})
 			)}
 		</section>
 	);

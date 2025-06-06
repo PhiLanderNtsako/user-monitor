@@ -111,13 +111,15 @@ export default function UsersPage() {
 
 		if (search.trim()) {
 			const s = search.toLowerCase();
-			filtered = filtered.filter(
-				(u) =>
-					u.department_name.toLowerCase().includes(s) ||
-					u.user_role.toLowerCase().includes(s) ||
-					u.email.toLowerCase().includes(s) ||
-					u.extension_number.toLowerCase().includes(s)
-			);
+			filtered = filtered.filter((u) => {
+				const fullName = `${u.first_name} ${u.last_name}`.toLowerCase();
+				return (
+					fullName.includes(s) ||
+					(u.email?.toLowerCase() || "").includes(s) ||
+					(u.extension_number?.toLowerCase() || "").includes(s) ||
+					(u.department_name?.toLowerCase() || "").includes(s)
+				);
+			});
 		}
 
 		const getSortableValue = (
