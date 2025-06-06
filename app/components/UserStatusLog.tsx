@@ -76,7 +76,6 @@ export default function UserStatusLog({
 									<ul className="divide-y">
 										{logsForDate
 											.slice()
-											.reverse()
 											.map((log, index, reversedLogs) => {
 												const {
 													id,
