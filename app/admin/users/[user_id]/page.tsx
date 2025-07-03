@@ -1,9 +1,13 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import EditUserModal from "@/app/components/EditUserModal";
 import UserStatusLog from "@/app/components/UserStatusLog";
+import { useAuth } from "../../../utils/AuthContext";
+import toast from "react-hot-toast";
+import { useRef } from "react";
 
 type User = {
 	user_id: number;
@@ -29,37 +33,53 @@ type StatusLog = {
 	created_at: string;
 };
 
-type UserSession = {
-	user_role: string;
+type Departments = {
+	id: string;
+	name: string;
 };
 
 export default function UserPage() {
 	const router = useRouter();
 	const { user_id } = useParams<{ user_id: string }>();
 	const parsedUserId = user_id ? parseInt(user_id, 10) : undefined;
+
+	const { sessionUser, isAuthReady } = useAuth();
 	const [user, setUser] = useState<User | null>(null);
-	const [error, setError] = useState("");
-	const [loading, setLoading] = useState(true);
-	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [logs, setLogs] = useState<StatusLog[]>([]);
-	const [userSession, setUserSession] = useState<UserSession>({
-		user_role: "",
-	});
+	const [departmentsData, setDepartmentsData] = useState<Departments[]>([]);
+
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [loadingLogs, setLoadingLogs] = useState(false);
-	const [errorLogs, setErrorLogs] = useState("");
+	const [error, setError] = useState("");
+	const [logError, setLogError] = useState("");
+	const successToastShown = useRef(false);
+
+	useEffect(() => {
+		if (isAuthReady && !sessionUser) {
+			router.push("/login");
+		}
+	}, [sessionUser, isAuthReady, router]);
 
 	useEffect(() => {
 		const fetchUser = async () => {
 			try {
 				const response = await fetch(
-					`https://test.apbco.co.za/switchboard/api/public/index.php/users/?userid=${user_id}`
+					`https://test.apbco.co.za/switchboard/api/public/index.php/users/?userid=${parsedUserId}`
 				);
 				const data = await response.json();
 
 				if (data.status === "success") {
 					setUser(data.data[0]);
+					if (!successToastShown.current) {
+						toast.success(
+							data?.message || "Users fetched successfully."
+						);
+						successToastShown.current = true;
+					}
 				} else {
 					setError(data.message || "Failed to fetch user");
+					toast.error(data?.message || "Failed to fetch user.");
 				}
 			} catch (err) {
 				setError("Failed to fetch user" + err);
@@ -67,22 +87,20 @@ export default function UserPage() {
 				setLoading(false);
 			}
 		};
-		setLoadingLogs(true);
 
 		const fetchUserStatusLogs = async () => {
 			try {
 				const response = await fetch(
-					`https://test.apbco.co.za/switchboard/api/public/index.php/status/log/?userid=${user_id}`
+					`https://test.apbco.co.za/switchboard/api/public/index.php/status/log/?userid=${parsedUserId}`
 				);
 				const data = await response.json();
 				if (data.status === "success") {
 					setLogs(data.data);
-					setErrorLogs("");
 				} else {
-					setErrorLogs(data.message || "Failed to load logs.");
+					throw new Error(data.message || "Failed to fetch logs.");
 				}
 			} catch (err) {
-				setErrorLogs("Failed to fetch user" + err);
+				setLogError("Failed to fetch user" + err);
 			} finally {
 				setLoadingLogs(false);
 			}
@@ -90,64 +108,46 @@ export default function UserPage() {
 
 		fetchUser();
 		fetchUserStatusLogs();
-	}, [user_id]);
+	}, [parsedUserId]);
 
-	// Auth check
 	useEffect(() => {
-		const token = localStorage.getItem("token");
-		const user_session = JSON.parse(
-			localStorage.getItem("user") || "{}"
-		) as UserSession;
+		const fetchDepartments = async () => {
+			try {
+				const response = await fetch(
+					"https://test.apbco.co.za/switchboard/api/public/index.php/users/departments/"
+				);
+				const data = await response.json();
+				setDepartmentsData(data.data || []);
+			} catch (err) {
+				console.error("Failed to fetch departments", err);
+			}
+		};
 
-		setUserSession(user_session);
+		fetchDepartments();
+	}, []);
 
-		if (!token || user_session.user_role === "user") {
-			router.replace("/login?unauthorized=true");
-		}
-	}, [router]);
-
-	const isRegularUser = ["admin", "super"].includes(userSession.user_role);
+	const isAdmin = ["admin", "super"].includes(sessionUser?.user_role ?? "");
 
 	if (loading) {
 		return (
-			<div className="flex justify-center items-center h-screen">
-				<div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+			<div className="flex items-center justify-center h-screen">
+				<div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
 			</div>
 		);
 	}
 
-	if (error) {
+	if (error || !user) {
 		return (
 			<div className="max-w-3xl mx-auto mt-8 p-4 bg-red-50 border border-red-200 rounded">
-				<p className="text-red-600">{error}</p>
+				<p className="text-red-600">{error || "User not found."}</p>
 				<Link
 					href="/admin/users"
-					className="text-blue-600 hover:underline mt-4 inline-block"
+					className="inline-block mt-4 text-blue-600 hover:underline"
 				>
 					&larr; Back to Users
 				</Link>
 			</div>
 		);
-	}
-
-	if (!user) {
-		return (
-			<div className="max-w-3xl mx-auto mt-8 p-4">
-				<p>User not found</p>
-				<Link
-					href="/admin/users"
-					className="text-blue-600 hover:underline mt-4 inline-block"
-				>
-					&larr; Back to Users
-				</Link>
-			</div>
-		);
-	}
-
-	// If `user_id` is required:
-	if (parsedUserId === undefined || isNaN(parsedUserId)) {
-		// handle error, redirect, or show fallback
-		return <div>User ID is invalid</div>;
 	}
 
 	return (
@@ -159,125 +159,95 @@ export default function UserPage() {
 					</h1>
 					<p className="text-gray-600">{user.email}</p>
 				</div>
-				{isRegularUser && (
-					<button
-						onClick={() => setIsModalOpen(true)}
-						className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
-					>
-						Edit User
-					</button>
+
+				{isAdmin && (
+					<>
+						<button
+							onClick={() => setIsModalOpen(true)}
+							className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
+						>
+							Edit User
+						</button>
+						<Link
+							href="/admin/users"
+							className="inline-flex items-center text-blue-600 hover:text-blue-800 mt-6 transition-colors"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								className="h-5 w-5 mr-1"
+								fill="currentColor"
+								viewBox="0 0 20 20"
+							>
+								<path
+									fillRule="evenodd"
+									d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+									clipRule="evenodd"
+								/>
+							</svg>
+							Back to Users
+						</Link>
+					</>
 				)}
 			</div>
 
-			<div className="bg-white rounded-lg shadow-md p-6 mb-6">
-				<h2 className="text-xl font-semibold mb-4 text-gray-800">
-					User Details
-				</h2>
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<div className="bg-white shadow rounded-lg p-6 mb-6">
+				<div className="grid md:grid-cols-2 gap-6 text-sm text-gray-700">
 					<div>
-						<h3 className="font-medium text-gray-700 mb-2">
-							Personal Information
-						</h3>
-						<div className="space-y-2">
-							<p>
-								<span className="font-medium">First Name:</span>{" "}
-								{user.first_name}
-							</p>
-							<p>
-								<span className="font-medium">Last Name:</span>{" "}
-								{user.last_name}
-							</p>
-							<p>
-								<span className="font-medium">Email:</span>{" "}
-								{user.email}
-							</p>
-						</div>
+						<p>
+							<strong>First Name:</strong> {user.first_name}
+						</p>
+						<p>
+							<strong>Last Name:</strong> {user.last_name}
+						</p>
+						<p>
+							<strong>Email:</strong> {user.email}
+						</p>
 					</div>
-
 					<div>
-						<h3 className="font-medium text-gray-700 mb-2">
-							Contact Information
-						</h3>
-						<div className="space-y-2">
-							<p>
-								<span className="font-medium">Extension:</span>{" "}
-								{user.extension_number}
-							</p>
-							<p>
-								<span className="font-medium">Cellphone:</span>{" "}
-								{user.cellphone || "Not provided"}
-							</p>
-							<p>
-								<span className="font-medium">Telephone:</span>{" "}
-								{user.telephone || "Not provided"}
-							</p>
-						</div>
+						<p>
+							<strong>Extension:</strong> {user.extension_number}
+						</p>
+						<p>
+							<strong>Cellphone:</strong>{" "}
+							{user.cellphone || "N/A"}
+						</p>
+						<p>
+							<strong>Telephone:</strong>{" "}
+							{user.telephone || "N/A"}
+						</p>
 					</div>
-
 					<div>
-						<h3 className="font-medium text-gray-700 mb-2">
-							Organization
-						</h3>
-						<div className="space-y-2">
-							<p>
-								<span className="font-medium">Role:</span>{" "}
-								{user.user_role}
-							</p>
-							<p>
-								<span className="font-medium">Department:</span>{" "}
-								{user.department_name}
-							</p>
-						</div>
+						<p>
+							<strong>Role:</strong> {user.user_role}
+						</p>
+						<p>
+							<strong>Department:</strong> {user.department_name}
+						</p>
 					</div>
-
 					<div>
-						<h3 className="font-medium text-gray-700 mb-2">
-							Account Information
-						</h3>
-						<div className="space-y-2">
-							<p>
-								<span className="font-medium">User ID:</span>{" "}
-								{user.user_id}
-							</p>
-							<p>
-								<span className="font-medium">Created At:</span>{" "}
-								{new Date(user.created_at).toLocaleString()}
-							</p>
-						</div>
+						<p>
+							<strong>User ID:</strong> {user.user_id}
+						</p>
+						<p>
+							<strong>Created At:</strong>{" "}
+							{new Date(user.created_at).toLocaleString()}
+						</p>
 					</div>
 				</div>
 			</div>
+
 			<UserStatusLog
 				logs={logs}
 				loadingLogs={loadingLogs}
-				errorLogs={errorLogs}
+				errorLogs={logError}
 			/>
 
-			<Link
-				href="/admin/users"
-				className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					className="h-5 w-5 mr-1"
-					viewBox="0 0 20 20"
-					fill="currentColor"
-				>
-					<path
-						fillRule="evenodd"
-						d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-						clipRule="evenodd"
-					/>
-				</svg>
-				Back to Users
-			</Link>
-
-			{/* Edit User Modal */}
 			{isModalOpen && (
 				<EditUserModal
 					userData={user}
+					user_id={parsedUserId!}
+					departmentsData={departmentsData}
 					modalClose={() => setIsModalOpen(false)}
-					user_id={parsedUserId}
 				/>
 			)}
 		</div>

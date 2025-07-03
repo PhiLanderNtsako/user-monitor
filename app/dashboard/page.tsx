@@ -1,56 +1,42 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { formatDateTime } from "../utils/formatDateTime";
+import { useAuth } from "../utils/AuthContext";
+import { User } from "../utils/Types";
+import UserTable from "../components/DashboardTable";
+import toast from "react-hot-toast";
+import { useRef } from "react";
 
-type User = {
-	id: number;
-	user_first_name: string;
-	user_last_name: string;
-	extension_number: string;
-	email: string;
-	status_name: string;
-	status_note: string;
-	updated_at: string;
-};
+// Inside your component
 
-export default function AdminPage() {
+export default function DashboardPage() {
+	const { sessionUser, isAuthReady } = useAuth();
 	const router = useRouter();
 	const [users, setUsers] = useState<User[]>([]);
-	const [error, setError] = useState("");
-
 	const [search, setSearch] = useState("");
+	const [statusFilter, setStatusFilter] = useState("");
+	const [departmentFilter, setDepartmentFilter] = useState("");
 	const [sortKey, setSortKey] = useState<keyof User>("updated_at");
 	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(true);
+	const successToastShown = useRef(false);
 
-	const statusColors = {
-		Available: "bg-emerald-500 text-white", // Fresh green for available
-		"On Lunch": "bg-amber-400 text-gray-800", // Warm yellow for lunch
-		"In a Meeting": "bg-blue-500 text-white", // Professional blue for meetings
-		"On Leave": "bg-purple-500 text-white", // Distinct purple for leave
-		"On Sick Leave": "bg-red-500 text-white", // Alert red for sick leave
-		"Logged Out": "bg-gray-400 text-gray-800", // Neutral gray for logged out
-		"On Call": "bg-indigo-600 text-white", // Rich indigo for on call
-		Away: "bg-yellow-300 text-gray-800", // Light yellow for away
-		Busy: "bg-orange-500 text-white", // Vibrant orange for busy
-		"On Break": "bg-cyan-400 text-gray-800", // Refreshing cyan for breaks
-		Default: "bg-gray-200 text-gray-800", // Default light gray
-	};
-
-	const columns: { label: string; key: keyof User | "name" }[] = [
-		{ label: "Name", key: "name" }, // We'll handle this as a custom derived field
-		{ label: "Extension", key: "extension_number" },
-		{ label: "Current Status", key: "status_name" },
-		{ label: "Updated At", key: "updated_at" },
-	];
-
-	const user =
-		typeof window !== "undefined"
-			? JSON.parse(localStorage.getItem("user") || "{}")
-			: null;
-	const departmentId = user?.user_role == "super" ? null : user?.department;
 	useEffect(() => {
+		if (isAuthReady && !sessionUser) {
+			router.push("/login");
+		}
+	}, [sessionUser, isAuthReady, router]);
+
+	const departmentId =
+		sessionUser?.user_role == "super" ||
+		sessionUser?.user_role == "operator"
+			? null
+			: sessionUser?.department;
+
+	useEffect(() => {
+		if (sessionUser?.user_role === "user") return;
+
 		const fetchUsers = async () => {
 			try {
 				const response = await fetch(
@@ -60,23 +46,30 @@ export default function AdminPage() {
 				if (data.status) {
 					setUsers(data.data);
 					setError("");
+					if (!successToastShown.current) {
+						toast.success(
+							data?.message || "Users fetched successfully."
+						);
+						successToastShown.current = true;
+					}
 				} else {
+					toast.error(data?.message || "Failed to fetch users.");
 					setError(data.message || "Failed to fetch users");
+					successToastShown.current = false;
 				}
 			} catch (err) {
 				setError("Failed to fetch users" + err);
+				toast.error("Failed to fetch users" + err);
 			} finally {
 				setLoading(false);
 			}
 		};
 
-		fetchUsers(); // initial fetch
-		const interval = setInterval(fetchUsers, 1000); // fetch every 5 seconds
+		fetchUsers();
+		const interval = setInterval(fetchUsers, 1000);
+		return () => clearInterval(interval);
+	}, [departmentId, sessionUser?.user_role]);
 
-		return () => clearInterval(interval); // cleanup on unmount
-	}, [departmentId]);
-
-	// Sorting & filtering logic
 	const filteredUsers = useMemo(() => {
 		let filtered = users;
 
@@ -94,182 +87,122 @@ export default function AdminPage() {
 			});
 		}
 
-		const getSortableValue = (
-			user: User,
-			key: keyof User
-		): string | number => {
-			if (key === "updated_at") {
-				return new Date(user.updated_at).getTime(); // returns number (timestamp)
-			}
-			const val = user[key];
-			// val is string for name/email/status, so just return as is
+		if (statusFilter) {
+			filtered = filtered.filter((u) => u.status_name === statusFilter);
+		}
+		if (departmentFilter) {
+			filtered = filtered.filter(
+				(u) => u.department_name === departmentFilter
+			);
+		}
+
+		const getValue = (u: User, key: keyof User): string | number => {
+			if (key === "updated_at") return new Date(u.updated_at).getTime();
+			const val = u[key];
+			if (val === undefined || val === null) return "";
 			return typeof val === "string" ? val.toLowerCase() : val;
 		};
 
-		filtered = filtered.sort((a, b) => {
-			const aVal = getSortableValue(a, sortKey);
-			const bVal = getSortableValue(b, sortKey);
-
+		return [...filtered].sort((a, b) => {
+			const aVal = getValue(a, sortKey);
+			const bVal = getValue(b, sortKey);
 			if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
 			if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
 			return 0;
 		});
+	}, [users, search, statusFilter, departmentFilter, sortKey, sortOrder]);
 
-		return filtered;
-	}, [users, search, sortKey, sortOrder]);
-
-	// Toggle sort order or set new sort key
-	const onSort = (key: keyof User) => {
-		if (sortKey === key) {
-			setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+	const handleSort = (key: keyof User) => {
+		if (key === sortKey) {
+			setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
 		} else {
 			setSortKey(key);
 			setSortOrder("asc");
 		}
 	};
 
-	useEffect(() => {
-		const token = localStorage.getItem("token");
-		const userStr = localStorage.getItem("user");
-		let role = "";
-
-		if (userStr) {
-			try {
-				const userObj = JSON.parse(userStr);
-
-				role = userObj.user_role || "";
-			} catch (err) {
-				console.error("Failed to parse user from localStorage", err);
-			}
-		}
-
-		if (!token || role === "user") {
-			router.replace("/login?unauthorized=true");
-		}
-	}, [departmentId, router]);
+	if (!isAuthReady) {
+		return (
+			<div className="text-center p-8 text-gray-500">
+				Checking authentication...
+			</div>
+		);
+	}
 
 	return (
-		<div className="max-w-6xl mx-auto mt-8 p-6 bg-white rounded-md shadow-md">
-			<h1 className="text-3xl font-bold mb-6">Status Monitor</h1>
+		<>
+			<div className="max-w-6xl mx-auto mt-8 p-6 bg-white rounded-md shadow-md">
+				<h3 className="text-3xl font-bold mb-2">Dashboard</h3>
 
-			{/* Search */}
-			<div className="mb-4">
-				<input
-					type="text"
-					placeholder="Search by name, email, or status..."
-					value={search}
-					onChange={(e) => setSearch(e.target.value)}
-					className="w-full max-w-sm border rounded-md px-3 py-2"
-				/>
-			</div>
+				<div className="flex flex-wrap gap-4 mb-6">
+					<input
+						type="text"
+						placeholder="Search by name, email, or status..."
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+						className="w-full max-w-sm border rounded-md px-3 py-2"
+					/>
 
-			<div className="bg-white rounded-lg shadow overflow-hidden">
+					<select
+						value={statusFilter}
+						onChange={(e) => setStatusFilter(e.target.value)}
+						className="border rounded-md px-3 py-2"
+					>
+						<option value="">All Statuses</option>
+						{[...new Set(users.map((u) => u.status_name))]
+							.sort()
+							.map((status) => (
+								<option key={status} value={status}>
+									{status}
+								</option>
+							))}
+					</select>
+
+					<select
+						value={departmentFilter}
+						onChange={(e) => setDepartmentFilter(e.target.value)}
+						className="border rounded-md px-3 py-2"
+					>
+						<option value="">All Departments</option>
+						{[...new Set(users.map((u) => u.department_name))]
+							.sort()
+							.map((dept) => (
+								<option key={dept} value={dept}>
+									{dept}
+								</option>
+							))}
+					</select>
+
+					<button
+						onClick={() => setDepartmentFilter("Call Centre")}
+						className={`px-4 py-1.5 rounded-md text-sm font-semibold transition ${
+							departmentFilter === "Call Centre"
+								? "bg-blue-600 text-white shadow"
+								: "bg-blue-100 text-blue-800 hover:bg-blue-200"
+						}`}
+					>
+						Call Centre Department
+					</button>
+				</div>
+
 				{loading ? (
-					<div className="p-8 text-center">
-						<div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+					<div className="text-center p-8">
+						<div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
 						<p className="mt-2 text-gray-600">Loading users...</p>
 					</div>
 				) : error ? (
-					<div className="p-4 bg-red-50 border-l-4 border-red-500">
-						<p className="text-red-700">{error}</p>
+					<div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+						{error}
 					</div>
 				) : (
-					<div className="overflow-x-auto">
-						<table className="min-w-full divide-y divide-gray-200">
-							<thead className="bg-gray-50">
-								<tr>
-									{columns.map(({ label, key }) => (
-										<th
-											key={key}
-											onClick={() =>
-												onSort(
-													key === "name"
-														? "user_last_name"
-														: (key as keyof User)
-												)
-											}
-											className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-										>
-											<div className="flex items-center">
-												{label}
-												{sortKey === key ||
-												(key === "name" &&
-													sortKey ===
-														"user_last_name") ? (
-													<span className="ml-1">
-														{sortOrder === "asc"
-															? "↑"
-															: "↓"}
-													</span>
-												) : null}
-											</div>
-										</th>
-									))}
-								</tr>
-							</thead>
-							<tbody className="bg-white divide-y divide-gray-200">
-								{filteredUsers.length === 0 ? (
-									<tr>
-										<td
-											colSpan={6}
-											className="px-6 py-4 text-center text-gray-500"
-										>
-											No users found
-										</td>
-									</tr>
-								) : (
-									filteredUsers.map((user) => (
-										<tr
-											key={user.id}
-											className="hover:bg-gray-50"
-										>
-											<td className="px-6 py-4 whitespace-nowrap">
-												<div className="flex items-center">
-													<div className="ml-4">
-														<div className="text-sm font-medium text-gray-900">
-															{
-																user.user_last_name
-															}{" "}
-															{
-																user.user_first_name
-															}
-														</div>
-													</div>
-												</div>
-											</td>
-											<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-												{user.extension_number}
-											</td>
-											<td className="px-6 py-4 whitespace-nowrap">
-												<span
-													className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-														${
-															statusColors[
-																user.status_name as keyof typeof statusColors
-															] ||
-															statusColors[
-																"Default"
-															]
-														}`}
-												>
-													{user.status_name}
-												</span>
-											</td>
-											<td className="px-6 py-4 whitespace-nowrap">
-												{
-													formatDateTime(
-														user.updated_at
-													).relative
-												}
-											</td>
-										</tr>
-									))
-								)}
-							</tbody>
-						</table>
-					</div>
+					<UserTable
+						users={filteredUsers}
+						sortKey={sortKey}
+						sortOrder={sortOrder}
+						onSort={handleSort}
+					/>
 				)}
 			</div>
-		</div>
+		</>
 	);
 }

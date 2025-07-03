@@ -1,137 +1,113 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-
-type UserData = {
-	id: number;
-	name: string;
-	user_role: string;
-};
+import { useAuth } from "../utils/AuthContext";
 
 export default function Navigation() {
+	const { sessionUser, logout, token } = useAuth();
 	const router = useRouter();
-	const pathname = usePathname(); // Get current path
-	const [isLoggedIn, setIsLoggedIn] = useState(false);
-	const [isAdmin, setIsAdmin] = useState(false);
-	const [userData, setUserData] = useState<UserData | null>(null);
+	const pathname = usePathname();
 
-	useEffect(() => {
-		const handleAuthChange = () => {
-			const token = localStorage.getItem("token");
-			const userStr = localStorage.getItem("user");
-
-			let role = "";
-			if (userStr) {
-				try {
-					const userObj = JSON.parse(userStr);
-					setUserData(userObj);
-					role = userObj.user_role || "";
-				} catch (err) {
-					console.error(
-						"Failed to parse user from localStorage",
-						err
-					);
-					setUserData(null);
-				}
-			} else {
-				setUserData(null);
-			}
-
-			setIsLoggedIn(!!token);
-			setIsAdmin(role === "admin" || role === "super");
-		};
-
-		handleAuthChange(); // run on mount
-		window.addEventListener("authChange", handleAuthChange);
-
-		return () => {
-			window.removeEventListener("authChange", handleAuthChange);
-		};
-	}, []);
+	const isAdmin =
+		sessionUser?.user_role === "admin" ||
+		sessionUser?.user_role === "super" ||
+		sessionUser?.user_role === "operator";
 
 	const handleLogout = async () => {
-		if (!userData) return;
+		if (!sessionUser) return;
 		try {
-			const response = await fetch(
-				`https://test.apbco.co.za/switchboard/api/public/index.php/auth/logout/?userid=${userData.id}`,
+			await fetch(
+				`https://test.apbco.co.za/switchboard/api/public/index.php/auth/logout/?userid=${sessionUser.id}`,
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 				}
 			);
-			const result = await response.json();
-			console.log(result);
-			localStorage.removeItem("token");
-			localStorage.removeItem("user");
-			window.dispatchEvent(new Event("authChange"));
-			router.push("/login");
 		} catch (err) {
-			console.log("Something went wrong. Try again." + err);
+			console.error("Logout failed", err);
+		} finally {
+			logout();
+			router.push("/login");
 		}
 	};
 
 	const isActive = (href: string) => pathname === href;
 
 	return (
-		<nav className="bg-white shadow-sm border-b">
+		<nav className="bg-white shadow-sm border-b sticky top-0 z-50">
 			<div className="max-w-screen-lg mx-auto px-4 py-3 flex justify-between items-center">
-				<div>
-					<h1 className="text-xl font-bold text-gray-800">
-						Switchboard Monitor
-					</h1>
-					{isLoggedIn && userData && (
-						<p className="text-sm text-gray-500">
-							Logged in as{" "}
-							<span className="font-medium font">
-								{userData.name}
-							</span>{" "}
-							({userData.user_role})
-						</p>
-					)}
+				<div className="flex items-center space-x-3">
+					<Image
+						src="/logo.png"
+						alt="Switchboard Logo"
+						width={40}
+						height={40}
+						className="rounded-full"
+					/>
+					<div>
+						<h1 className="text-lg font-bold text-gray-800 leading-tight">
+							Switchboard Monitor
+						</h1>
+						{token && sessionUser && (
+							<p className="text-xs text-gray-500">
+								<span className="font-medium">
+									{sessionUser.name}
+								</span>{" "}
+								({sessionUser.user_role})
+							</p>
+						)}
+					</div>
 				</div>
 
-				{isLoggedIn && userData && (
+				{token && sessionUser && (
 					<div className="flex items-center space-x-4 text-sm">
 						{isAdmin ? (
 							<>
-								<Link
+								<NavLink
+									href="/dashboard/status/"
+									isActive={isActive("/dashboard/status")}
+								>
+									Status
+								</NavLink>
+								<NavLink
 									href="/dashboard"
-									className={`hover:text-blue-600 ${
-										isActive("/dashboard")
-											? "text-blue-600 font-semibold"
-											: "text-gray-700"
-									}`}
+									isActive={isActive("/dashboard")}
 								>
 									Dashboard
-								</Link>
-								<Link
-									href="/admin/users"
-									className={`hover:text-blue-600 ${
-										isActive("/admin/users")
-											? "text-blue-600 font-semibold"
-											: "text-gray-700"
-									}`}
-								>
-									Users
-								</Link>
+								</NavLink>
+								{sessionUser?.user_role != "operator" && (
+									<NavLink
+										href="/admin/users"
+										isActive={isActive("/admin/users")}
+									>
+										Users
+									</NavLink>
+								)}
 							</>
 						) : (
-							<Link
-								href={`/admin/users/${userData.id}`}
-								className={`hover:text-blue-600 ${
-									isActive("/user")
-										? "text-blue-600 font-semibold"
-										: "text-gray-700"
-								}`}
-							>
-								Profile
-							</Link>
+							<>
+								<NavLink
+									href={`/user`}
+									isActive={isActive(`/user`)}
+								>
+									Dashboard
+								</NavLink>
+								<NavLink
+									href={`/admin/users/${sessionUser.id}`}
+									isActive={isActive(
+										`/admin/users/${sessionUser.id}`
+									)}
+								>
+									Profile
+								</NavLink>
+							</>
 						)}
+
 						<button
 							onClick={handleLogout}
-							className="text-red-600 hover:text-red-800 font-medium"
+							className="px-4 py-1.5 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-md font-medium transition"
 						>
 							Logout
 						</button>
@@ -139,5 +115,28 @@ export default function Navigation() {
 				)}
 			</div>
 		</nav>
+	);
+}
+
+function NavLink({
+	href,
+	isActive,
+	children,
+}: {
+	href: string;
+	isActive: boolean;
+	children: React.ReactNode;
+}) {
+	return (
+		<Link
+			href={href}
+			className={`px-4 py-1.5 rounded-md font-medium transition ${
+				isActive
+					? "bg-blue-100 text-blue-700"
+					: "text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+			}`}
+		>
+			{children}
+		</Link>
 	);
 }

@@ -27,6 +27,13 @@ type UserData = {
 	user_id: number;
 	department_name: string;
 	department_id: number;
+	role: string;
+	user_role: string;
+};
+
+type Departments = {
+	id: string;
+	name: string;
 };
 
 type EditUserModalProps = {
@@ -34,6 +41,7 @@ type EditUserModalProps = {
 	departmentId?: number | null; // or string if that's the case
 	modalClose: () => void;
 	userData: UserData;
+	departmentsData: Departments[];
 };
 
 // export default function EditUserModal({ register, reset, onClose, handleSubmit, setSubmitMessage, getMessageClass, submitMessage, onSubmit, errors, isSubmitting}) {
@@ -41,6 +49,7 @@ export default function EditUserModal({
 	user_id,
 	modalClose,
 	userData,
+	departmentsData,
 }: EditUserModalProps) {
 	const router = useRouter();
 	const [submitMessage, setSubmitMessage] = useState({ text: "", type: "" });
@@ -214,11 +223,8 @@ export default function EditUserModal({
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-1">
-								Email *
-							</label>
 							<input
-								type="email"
+								type="hidden"
 								{...register("email", {
 									required: "Email is required",
 									pattern: {
@@ -262,7 +268,9 @@ export default function EditUserModal({
 									{...register("role_id")}
 									className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
 								>
-									<option value="">Select Roles</option>
+									<option value={userData.role}>
+										{userData.user_role}
+									</option>
 									{roles.map((role) => (
 										<option key={role.id} value={role.id}>
 											{role.type}
@@ -307,6 +315,14 @@ export default function EditUserModal({
 								<option value={userData.department_id}>
 									{userData.department_name}
 								</option>
+								{departmentsData?.map((department) => (
+									<option
+										key={department.id}
+										value={department.id}
+									>
+										{department.name}
+									</option>
+								))}
 							</select>
 						</div>
 

@@ -2,43 +2,35 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "./utils/AuthContext";
 
 export default function HomePage() {
-  const router = useRouter();
+	const { sessionUser } = useAuth();
+	const router = useRouter();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userString = localStorage.getItem("user");
-
-    // If no token or user data, redirect to login
-    if (!token || !userString) {
-      router.push("/login");
-      return;
-    }
-
-    try {
-      const user = JSON.parse(userString);
-      const role = user.user_role;
-
-		if (role === "admin" || role === "operator") {
-			router.push("/dashboard");
-		} else {
-			router.push(`/user`);
+	useEffect(() => {
+		if (!sessionUser) {
+			router.push("/login");
+			return;
 		}
-    } catch (e) {
-      console.error("Failed to parse user info:", e);
-      // If parsing fails, redirect to login
-      router.push("/login");
-    }
-  }, [router]);
 
-  // Show loading state while checking auth
-  return (
-		<div className="text-center">
-			<h1 className="text-3xl font-semibold mb-4">
-				Welcome to the Switchboard Monitor
+		if (["operator", "super"].includes(sessionUser.user_role)) {
+			router.push("/dashboard");
+		}
+		if (["admin"].includes(sessionUser.user_role)) {
+			router.push("/dashboard/status");
+		}
+		if (["user"].includes(sessionUser.user_role)) {
+			router.push("/user");
+		}
+	}, [sessionUser, router]);
+
+	return (
+		<div className="min-h-screen flex flex-col items-center justify-center bg-[#F4F6F8] text-center px-4">
+			<h1 className="text-3xl font-bold text-[#1A73E8] mb-2">
+				Switchboard Monitor
 			</h1>
-			<p className="text-gray-600">Checking authentication...</p>
+			<p className="text-gray-600 text-sm">Checking your access...</p>
 		</div>
-  );
+	);
 }

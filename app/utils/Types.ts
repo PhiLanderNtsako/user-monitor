@@ -1,0 +1,21 @@
+export type User = {
+	id: number;
+	user_id: number;
+	first_name: string;
+	last_name: string;
+	user_first_name: string;
+	user_last_name: string;
+	extension_number: string;
+	email: string;
+	status_name: string;
+	status_note: string;
+	updated_at: string;
+	created_at: string;
+	department_id?: number;
+	department_name: string;
+	department_slug: string;
+	role: string;
+	cellphone?: string;
+	telephone?: string;
+	user_role: string;
+};

@@ -4,8 +4,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Suspense, useState } from "react";
-import ErrorMessage from "../components/ErrorMessage"; // adjust path as needed
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useAuth } from "../utils/AuthContext";
 
 const loginSchema = z.object({
 	email: z.string().email({ message: "Invalid email address" }),
@@ -16,7 +17,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
 	const router = useRouter();
-	const [serverError, setServerError] = useState("");
+	const { login } = useAuth();
 	const [loading, setLoading] = useState(false);
 
 	const {
@@ -29,7 +30,6 @@ export default function LoginPage() {
 
 	const onSubmit = async (data: LoginForm) => {
 		setLoading(true);
-		setServerError("");
 
 		try {
 			const response = await fetch(
@@ -40,85 +40,92 @@ export default function LoginPage() {
 					body: JSON.stringify(data),
 				}
 			);
-			const result = await response.json();
+			const result = await response
+				.json()
+				.catch(() => toast.error("Invalid server response."));
 
-			if (result.status === "success") {
-				localStorage.setItem("token", result.token);
-				localStorage.setItem("user", JSON.stringify(result.user));
+			if (response.ok && result?.status === "success") {
+				login(result.token, result.user);
 				window.dispatchEvent(new Event("authChange"));
 
-				if (
-					result.user.user_role === "admin" ||
-					result.user.user_role === "operator" ||
-					result.user.user_role === "super"
-				) {
-					router.push("/dashboard");
-				} else {
-					router.push("/user");
-				}
+				const redirectTo = ["admin", "operator", "super"].includes(
+					result.user.user_role
+				)
+					? "/dashboard"
+					: "/user";
+
+				router.push(redirectTo);
 			} else {
-				setServerError(result.message || "Login failed");
+				toast.error(result?.message || "Login failed. Try again.");
 			}
-		} catch (err) {
-			setServerError("Something went wrong. Try again." + err);
+		} catch {
+			toast.error("Connection error. Please try again.");
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	return (
-		<div className="max-w-md mx-auto mt-12 p-8 bg-white shadow-md rounded-lg">
-			<h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+		<div className="max-w-lg mx-auto mt-20 p-8 bg-[#F4F6F8] shadow-lg rounded-2xl animate-fadeIn">
+			<div className=" bg-white p-8 shadow-xl rounded-xl animate-fadeIn">
+				<h2 className="text-3xl font-bold text-center text-[#1A73E8] mb-2">
+					Switchboard Monitor
+				</h2>
+				<p className="text-center text-sm text-gray-500 mb-6">
+					Track user availability in real-time
+				</p>
 
-			<Suspense fallback={null}>
-				<ErrorMessage />
-			</Suspense>
+				<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+					<div>
+						<label
+							htmlFor="email"
+							className="block text-sm font-medium text-gray-700"
+						>
+							Email
+						</label>
+						<input
+							id="email"
+							type="email"
+							autoFocus
+							{...register("email")}
+							className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+						/>
+						{errors.email && (
+							<p className="text-sm text-red-600">
+								{errors.email.message}
+							</p>
+						)}
+					</div>
 
-			<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-				<div>
-					<label className="block text-sm font-medium mb-1">
-						Email
-					</label>
-					<input
-						type="email"
-						{...register("email")}
-						className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-500"
-					/>
-					{errors.email && (
-						<p className="text-red-600 text-sm">
-							{errors.email.message}
-						</p>
-					)}
-				</div>
+					<div>
+						<label
+							htmlFor="password"
+							className="block text-sm font-medium text-gray-700"
+						>
+							Password
+						</label>
+						<input
+							id="password"
+							type="password"
+							{...register("password")}
+							className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+						/>
+						{errors.password && (
+							<p className="text-sm text-red-600">
+								{errors.password.message}
+							</p>
+						)}
+					</div>
 
-				<div>
-					<label className="block text-sm font-medium mb-1">
-						Password
-					</label>
-					<input
-						type="password"
-						{...register("password")}
-						className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-500"
-					/>
-					{errors.password && (
-						<p className="text-red-600 text-sm">
-							{errors.password.message}
-						</p>
-					)}
-				</div>
-
-				{serverError && (
-					<p className="text-red-600 text-sm">{serverError}</p>
-				)}
-
-				<button
-					type="submit"
-					disabled={loading}
-					className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
-				>
-					{loading ? "Logging in..." : "Login"}
-				</button>
-			</form>
+					<button
+						type="submit"
+						disabled={loading}
+						className="w-full bg-[#1A73E8] hover:bg-blue-700 text-white py-2 rounded-md transition disabled:opacity-50"
+					>
+						{loading ? "Logging in..." : "Login"}
+					</button>
+				</form>
+			</div>
 		</div>
 	);
 }
