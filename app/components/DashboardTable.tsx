@@ -36,16 +36,23 @@ export default function DashboardTable({
 
 	return (
 		<div className="overflow-x-auto">
-			<table className="min-w-full text-xs whitespace-nowrap">
+			<table className="min-w-full divide-y divide-gray-200">
 				<thead className="bg-gray-100">
 					<tr>
 						{columns.map(({ label, key }) => (
 							<th
 								key={label}
-								onClick={() => onSort(key === "name" ? "user_last_name" : key)}
-								className="px-2 py-1 text-left font-medium text-gray-600 uppercase tracking-tight cursor-pointer hover:bg-gray-200"
+								onClick={() =>
+									onSort(
+										key === "name" ? "user_last_name" : key
+									)
+								}
+								className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
 							>
-								{label} <span>{getSortSymbol(key)}</span>
+								{label}{" "}
+								<span className="ml-1">
+									{getSortSymbol(key)}
+								</span>
 							</th>
 						))}
 					</tr>
@@ -53,20 +60,32 @@ export default function DashboardTable({
 				<tbody className="divide-y divide-gray-200">
 					{visibleUsers.length === 0 ? (
 						<tr>
-							<td colSpan={5} className="text-center px-2 py-2 text-gray-500">
+							<td
+								colSpan={5}
+								className="text-center px-6 py-4 text-gray-500"
+							>
 								No users found
 							</td>
 						</tr>
 					) : (
-							visibleUsers.map((u) => (
+						visibleUsers.map((u) => (
 							<tr key={u.id} className="hover:bg-gray-50">
-								<td className="px-2 py-1">{u.user_last_name} {u.user_first_name}</td>
-								<td className="px-2 py-1 text-gray-600">{u.department_name}</td>
-								<td className="px-2 py-1 text-gray-600">{u.extension_number}</td>
-								<td className="px-2 py-1">
-									<StatusBadge status={u.status_name} compact />
+								<td className="px-6 py-4">
+									{u.user_last_name} {u.user_first_name}
 								</td>
-								<td className="px-2 py-1 text-gray-600">
+								<td className="px-6 py-4 text-gray-600">
+									{u.department_name}
+								</td>
+								<td className="px-6 py-4 text-gray-600">
+									{u.extension_number}
+								</td>
+								<td className="px-6 py-4">
+									<StatusBadge
+										status={u.status_name}
+										compact
+									/>
+								</td>
+								<td className="px-6 py-4 text-gray-600">
 									{formatDateTime(u.updated_at).relative}
 								</td>
 							</tr>

@@ -22,7 +22,11 @@ export default function StatusBadge({
 	const classes = statusColors[status as keyof typeof statusColors] || statusColors.Default;
 
 	return (
-		<span className={`inline-block rounded-full font-medium ${compact ? "text-[10px] px-2 py-[1px]" : "text-xs px-2 py-1"} ${classes}`}>
+		<span
+			className={`inline-block rounded-full font-medium ${
+				compact ? "text-xs px-2 py-1" : "text-xs px-2 py-1"
+			} ${classes}`}
+		>
 			{status}
 		</span>
 	);

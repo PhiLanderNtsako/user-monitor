@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../utils/AuthContext";
 import { User } from "../utils/Types";
-import UserTable from "../components/DashboardTable";
+import DashboardTable from "../components/DashboardTable";
 import toast from "react-hot-toast";
 import { useRef } from "react";
 
@@ -195,7 +195,7 @@ export default function DashboardPage() {
 						{error}
 					</div>
 				) : (
-					<UserTable
+					<DashboardTable
 						users={filteredUsers}
 						sortKey={sortKey}
 						sortOrder={sortOrder}
