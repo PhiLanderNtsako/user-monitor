@@ -66,7 +66,7 @@ export default function EditUserModal({
 		const fetchRoles = async () => {
 			try {
 				const response = await fetch(
-					"https://test.apbco.co.za/switchboard/api/public/index.php/users/roles/"
+					"https://api.apbco.co.za/switchboard/public/index.php/users/roles/"
 				);
 				const data = await response.json();
 				setRoles(data.data);
@@ -83,7 +83,7 @@ export default function EditUserModal({
 		setSubmitMessage({ text: "", type: "" });
 		try {
 			const response = await fetch(
-				`https://test.apbco.co.za/switchboard/api/public/index.php/users/`,
+				`https://api.apbco.co.za/switchboard/public/index.php/users/`,
 				{
 					method: "PUT",
 					headers: {

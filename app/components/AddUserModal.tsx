@@ -51,7 +51,7 @@ export default function AddUserModal({
         setSubmitMessage({ text: "", type: "" });
         try {
             const response = await fetch(
-                `https://test.apbco.co.za/switchboard/api/public/index.php/users/`,
+                `https://api.apbco.co.za/switchboard/public/index.php/users/`,
                 {
                     method: "POST",
                     headers: {

@@ -33,7 +33,7 @@ export default function LoginPage() {
 
 		try {
 			const response = await fetch(
-				"https://test.apbco.co.za/switchboard/api/public/index.php/auth/login/",
+				"https://api.apbco.co.za/switchboard/public/index.php/auth/login/",
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },

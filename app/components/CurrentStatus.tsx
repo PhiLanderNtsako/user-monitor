@@ -92,7 +92,7 @@ export default function CurrentStatus({ userId }: CurrentStatusProps) {
 	const fetchCurrentStatus = useCallback(async () => {
 		try {
 			const response = await fetch(
-				`https://test.apbco.co.za/switchboard/api/public/index.php/status/current/?userid=${userId}`
+				`https://api.apbco.co.za/switchboard/public/index.php/status/current/?userid=${userId}`
 			);
 			const data = await response.json();
 			if (data.status === "success") {
@@ -115,7 +115,7 @@ export default function CurrentStatus({ userId }: CurrentStatusProps) {
   	const fetchStatuses = useCallback(async () => {
 		try {
 			const response = await fetch(
-				"https://test.apbco.co.za/switchboard/api/public/index.php/status/"
+				"https://api.apbco.co.za/switchboard/public/index.php/status/"
 			);
 			const data = await response.json();
 			setStatuses(data.data);
@@ -127,7 +127,7 @@ export default function CurrentStatus({ userId }: CurrentStatusProps) {
   	const fetchCurrentStatusLog = useCallback(async () => {
 		try {
 			const response = await fetch(
-				`https://test.apbco.co.za/switchboard/api/public/index.php/status/log/?userid=${userId}`
+				`https://api.apbco.co.za/switchboard/public/index.php/status/log/?userid=${userId}`
 			);
 			const data = await response.json();
 			if (data.status === "success") {
@@ -157,7 +157,7 @@ export default function CurrentStatus({ userId }: CurrentStatusProps) {
 		
 		try {
 			const res = await fetch(
-				"https://test.apbco.co.za/switchboard/api/public/index.php/status/current/",
+				"https://api.apbco.co.za/switchboard/public/index.php/status/current/",
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },

@@ -42,7 +42,7 @@ export default function UsersPage() {
 		const fetchDepartments = async () => {
 			try {
 				const response = await fetch(
-					"https://test.apbco.co.za/switchboard/api/public/index.php/users/departments/"
+					"https://api.apbco.co.za/switchboard/public/index.php/users/departments/"
 				);
 				const data = await response.json();
 				setDepartmentsData(data.data || []);
@@ -58,7 +58,7 @@ export default function UsersPage() {
 		const fetchUsers = async () => {
 			try {
 				const response = await fetch(
-					`https://test.apbco.co.za/switchboard/api/public/index.php/users/?departmentid=${departmentId}`
+					`https://api.apbco.co.za/switchboard/public/index.php/users/?departmentid=${departmentId}`
 				);
 				const res = await response.json();
 				if (res.status) {

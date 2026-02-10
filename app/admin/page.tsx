@@ -43,7 +43,7 @@ export default function AdminPage() {
   useEffect(() => {
 		const fetchUsers = () => {
 			fetch(
-				"https://test.apbco.co.za/switchboard/api/public/index.php/status/current"
+				"https://api.apbco.co.za/switchboard/public/index.php/status/current"
 			)
 				.then((res) => res.json())
 				.then((data) => {

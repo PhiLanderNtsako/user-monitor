@@ -19,7 +19,7 @@ export default function Navigation() {
 		if (!sessionUser) return;
 		try {
 			await fetch(
-				`https://test.apbco.co.za/switchboard/api/public/index.php/auth/logout/?userid=${sessionUser.id}`,
+				`https://api.apbco.co.za/switchboard/public/index.php/auth/logout/?userid=${sessionUser.id}`,
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },

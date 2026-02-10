@@ -65,7 +65,7 @@ export default function UserPage() {
 		const fetchUser = async () => {
 			try {
 				const response = await fetch(
-					`https://test.apbco.co.za/switchboard/api/public/index.php/users/?userid=${parsedUserId}`
+					`https://api.apbco.co.za/switchboard/public/index.php/users/?userid=${parsedUserId}`
 				);
 				const data = await response.json();
 
@@ -91,7 +91,7 @@ export default function UserPage() {
 		const fetchUserStatusLogs = async () => {
 			try {
 				const response = await fetch(
-					`https://test.apbco.co.za/switchboard/api/public/index.php/status/log/?userid=${parsedUserId}`
+					`https://api.apbco.co.za/switchboard/public/index.php/status/log/?userid=${parsedUserId}`
 				);
 				const data = await response.json();
 				if (data.status === "success") {
@@ -114,7 +114,7 @@ export default function UserPage() {
 		const fetchDepartments = async () => {
 			try {
 				const response = await fetch(
-					"https://test.apbco.co.za/switchboard/api/public/index.php/users/departments/"
+					"https://api.apbco.co.za/switchboard/public/index.php/users/departments/"
 				);
 				const data = await response.json();
 				setDepartmentsData(data.data || []);
