@@ -40,7 +40,7 @@ export default function DashboardPage() {
 		const fetchUsers = async () => {
 			try {
 				const response = await fetch(
-					`https://test.apbco.co.za/switchboard/api/public/index.php/status/current/?departmentid=${departmentId}`
+					`https://api.apbco.co.za/switchboard/public/index.php/status/current/?departmentid=${departmentId}`
 				);
 				const data = await response.json();
 				if (data.status) {
